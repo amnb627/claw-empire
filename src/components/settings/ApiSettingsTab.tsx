@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { API_TYPE_PRESETS } from "./constants";
 import ApiAssignModal from "./ApiAssignModal";
 import type { ApiStateBundle, TFunction } from "./types";
@@ -32,6 +33,8 @@ export default function ApiSettingsTab({ t, localeTag, apiState }: ApiSettingsTa
     handleApiEditStart,
     handleApiModelAssign,
   } = apiState;
+
+  const [modelSearchQs, setModelSearchQs] = useState<Record<string, string>>({});
 
   return (
     <>
@@ -313,10 +316,31 @@ export default function ApiSettingsTab({ t, localeTag, apiState }: ApiSettingsTa
                         )}
                       </button>
                       {isExpanded && (
-                        <div className="mt-1.5 max-h-48 overflow-y-auto rounded border border-slate-700/30 bg-slate-900/40 p-2">
-                          {provider.models_cache.map((model) => (
-                            <div
-                              key={model}
+                        <div className="mt-2 space-y-2">
+                          <input
+                            type="text"
+                            placeholder={t({
+                              ko: "모델 검색...",
+                              en: "Search models...",
+                              ja: "モデル検索...",
+                              zh: "搜索模型...",
+                            })}
+                            value={modelSearchQs[provider.id] || ""}
+                            onChange={(e) =>
+                              setModelSearchQs((prev) => ({ ...prev, [provider.id]: e.target.value }))
+                            }
+                            className="w-full rounded border border-slate-600 bg-slate-800/70 px-2 py-1 text-[11px] text-white focus:border-blue-500 focus:outline-none"
+                          />
+                          <div className="max-h-48 overflow-y-auto rounded border border-slate-700/30 bg-slate-900/40 p-2">
+                            {provider.models_cache
+                              .filter((m) =>
+                                (modelSearchQs[provider.id] || "")
+                                  ? m.toLowerCase().includes(modelSearchQs[provider.id].toLowerCase())
+                                  : true,
+                              )
+                              .map((model) => (
+                                <div
+                                  key={model}
                               className="flex items-center justify-between text-[11px] font-mono text-slate-400 py-0.5 group/model hover:bg-slate-700/30 rounded px-1 -mx-1"
                             >
                               <span className="truncate">{model}</span>
@@ -334,6 +358,16 @@ export default function ApiSettingsTab({ t, localeTag, apiState }: ApiSettingsTa
                               </button>
                             </div>
                           ))}
+                            {provider.models_cache.filter((m) =>
+                              (modelSearchQs[provider.id] || "")
+                                ? m.toLowerCase().includes(modelSearchQs[provider.id].toLowerCase())
+                                : true,
+                            ).length === 0 && (
+                              <div className="text-[11px] text-slate-500 text-center py-2">
+                                {t({ ko: "검색 결과 없음", en: "No results", ja: "結果なし", zh: "无结果" })}
+                              </div>
+                            )}
+                          </div>
                         </div>
                       )}
                     </div>
