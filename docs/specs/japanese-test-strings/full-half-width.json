@@ -1,0 +1,115 @@
+{
+  "name": "全角・半角混在セット",
+  "category": "full_half_width",
+  "description": "全角文字と半角文字が混在するテキストの表示テスト",
+  "version": "1.0.0",
+  "created": "2026-03-08",
+  "note": "全角と半角の幅の違いがレイアウトに与える影響を確認",
+  "strings": [
+    {
+      "id": "full-half-001",
+      "label": "全角英数 + 半角英数",
+      "text": "ＡＢＣ１２３abc123",
+      "expected_length": 13,
+      "priority": "P1"
+    },
+    {
+      "id": "full-half-002",
+      "label": "ひらがな + 英字 + 漢字",
+      "text": "こんにちはHello世界",
+      "expected_length": 12,
+      "priority": "P1"
+    },
+    {
+      "id": "full-half-003",
+      "label": "半角数字 + 漢字",
+      "text": "2026年3月8日",
+      "expected_length": 9,
+      "priority": "P0"
+    },
+    {
+      "id": "full-half-004",
+      "label": "全角英字 + カタカナ",
+      "text": "Ｔｅｓｔテスト",
+      "expected_length": 9,
+      "priority": "P1"
+    },
+    {
+      "id": "full-half-005",
+      "label": "半角カナ + 全角カナ",
+      "text": "ｶﾀｶﾅカタカナ",
+      "expected_length": 9,
+      "priority": "P1"
+    },
+    {
+      "id": "full-half-006",
+      "label": "日本語引用符 + 英字引用符",
+      "text": "「引用符」vs\"ダブルクォート\"",
+      "expected_length": 16,
+      "priority": "P1"
+    },
+    {
+      "id": "full-half-007",
+      "label": "全角括弧 + 半角括弧",
+      "text": "（括弧）vs(parenthesis)",
+      "expected_length": 17,
+      "priority": "P1"
+    },
+    {
+      "id": "full-half-008",
+      "label": "全角スペース + 半角スペース",
+      "text": "全角　半角",
+      "expected_length": 6,
+      "priority": "P1"
+    },
+    {
+      "id": "full-half-009",
+      "label": "全角記号 + 半角記号",
+      "text": "！？＠＊＃％？！@*#%",
+      "expected_length": 15,
+      "priority": "P2"
+    },
+    {
+      "id": "full-half-010",
+      "label": "URL混在",
+      "text": "https://example.com/日本語テスト",
+      "expected_length": 30,
+      "priority": "P1"
+    },
+    {
+      "id": "full-half-011",
+      "label": "メールアドレス形式",
+      "text": "test@example.com宛にお送りください",
+      "expected_length": 26,
+      "priority": "P1"
+    },
+    {
+      "id": "full-half-012",
+      "label": "コード混在",
+      "text": "const 変数 = \"値\"; // コメント",
+      "expected_length": 22,
+      "priority": "P2"
+    },
+    {
+      "id": "full-half-013",
+      "label": "複雑な混在",
+      "text": "ＣｌａｗＥｍｐｉｒｅ（クラウエンパイア）は2026年から始まりました。",
+      "expected_length": 36,
+      "priority": "P1"
+    },
+    {
+      "id": "full-half-014",
+      "label": "全角パーセント",
+      "text": "成功率は９５％です",
+      "expected_length": 10,
+      "priority": "P1"
+    },
+    {
+      "id": "full-half-015",
+      "label": "半角カナで全文",
+      "text": "ｺﾚﾊﾊﾝｶｸｶﾀｶﾅﾉﾃｽﾄﾃﾞｽ",
+      "expected_length": 17,
+      "priority": "P2"
+    }
+  ]
+}
