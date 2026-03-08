@@ -1,0 +1,119 @@
+{
+  "name": "異体字セレクタ（IVS）セット",
+  "category": "ivs",
+  "description": "IVS（Ideographic Variation Sequence）による異体字表現のテスト",
+  "version": "1.0.0",
+  "created": "2026-03-08",
+  "note": "IVSはベース文字＋異体字セレクタで構成される。全デバイスで表示保証はされていない。",
+  "strings": [
+    {
+      "id": "ivs-001",
+      "label": "葛（くさ）旧字体 IVS-1",
+      "text": "葛󠄀",
+      "base": "葛",
+      "selector": "U+E0100",
+      "description": "くさかの「葛」旧字体（文字上がり）",
+      "priority": "P1"
+    },
+    {
+      "id": "ivs-002",
+      "label": "葛（くさ）IVS-2",
+      "text": "葛󠄁",
+      "base": "葛",
+      "selector": "U+E0101",
+      "description": "くさかの「葛」別形体",
+      "priority": "P1"
+    },
+    {
+      "id": "ivs-003",
+      "label": "葛󠄀区",
+      "text": "葛󠄀区",
+      "description": "東京都葛飾区の正式表記",
+      "priority": "P1"
+    },
+    {
+      "id": "ivs-004",
+      "label": "吉（きち）つちよし IVS",
+      "text": "吉󠄀",
+      "base": "吉",
+      "selector": "U+E0100",
+      "description": "「つちよし」のIVS表現",
+      "priority": "P1"
+    },
+    {
+      "id": "ivs-005",
+      "label": "神（しん）IVS-1",
+      "text": "神󠄀",
+      "base": "神",
+      "selector": "U+E0100",
+      "description": "しんの異体字（⻌が異なる）",
+      "priority": "P1"
+    },
+    {
+      "id": "ivs-006",
+      "label": "神（しん）IVS-2",
+      "text": "神󠄁",
+      "base": "神",
+      "selector": "U+E0101",
+      "description": "しんの別形体",
+      "priority": "P2"
+    },
+    {
+      "id": "ivs-007",
+      "label": "辺（へん）IVS",
+      "text": "辺󠄀",
+      "base": "辺",
+      "selector": "U+E0100",
+      "description": "へんの異体字",
+      "priority": "P1"
+    },
+    {
+      "id": "ivs-008",
+      "label": "𠮷（つちよし）+ IVS",
+      "text": "𠮷󠄀",
+      "description": "サロゲートペア + IVS の組み合わせ",
+      "priority": "P2"
+    },
+    {
+      "id": "ivs-009",
+      "label": "⻯（しんにょう）IVS",
+      "text": "⻯󠄀",
+      "base": "⻯",
+      "selector": "U+E0100",
+      "description": "部首変化（しんにょう）",
+      "priority": "P2"
+    },
+    {
+      "id": "ivs-010",
+      "label": "﨔（しんにょう異体字）+ IVS",
+      "text": "﨔󠄀",
+      "description": "辶の異体字 + IVS",
+      "priority": "P2"
+    },
+    {
+      "id": "ivs-011",
+      "label": "境（さかい）IVS",
+      "text": "境󠄀",
+      "base": "境",
+      "selector": "U+E0100",
+      "description": "さいがみ境の異体字",
+      "priority": "P2"
+    },
+    {
+      "id": "ivs-012",
+      "label": "市（いち）IVS",
+      "text": "市󠄀",
+      "base": "市",
+      "selector": "U+E0100",
+      "description": "いちの異体字",
+      "priority": "P2"
+    },
+    {
+      "id": "ivs-013",
+      "label": "IVS混在文",
+      "text": "葛󠄀区神󠄀社で、吉󠄀田さんに会いました。",
+      "description": "IVSを含む文章",
+      "priority": "P1"
+    }
+  ]
+}

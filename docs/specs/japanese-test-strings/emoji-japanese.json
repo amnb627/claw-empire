@@ -1,0 +1,130 @@
+{
+  "name": "絵文字と日本語混在セット",
+  "category": "emoji_japanese",
+  "description": "絵文字と日本語が混在するテキストの表示テスト",
+  "version": "1.0.0",
+  "created": "2026-03-08",
+  "note": "絵文字もサロゲートペアとして扱われるものがある",
+  "strings": [
+    {
+      "id": "emoji-001",
+      "label": "国旗絵文字（日本）",
+      "text": "🇯🇵 日本語テスト",
+      "js_length": 4,
+      "visual_length": 7,
+      "priority": "P1"
+    },
+    {
+      "id": "emoji-002",
+      "label": "モバイル関連",
+      "text": "📱 モバイル対応",
+      "js_length": 4,
+      "visual_length": 8,
+      "priority": "P1"
+    },
+    {
+      "id": "emoji-003",
+      "label": "通知関連",
+      "text": "🔔 通知設定",
+      "js_length": 3,
+      "visual_length": 6,
+      "priority": "P1"
+    },
+    {
+      "id": "emoji-004",
+      "label": "成功状態",
+      "text": "✅ テスト完了",
+      "js_length": 3,
+      "visual_length": 7,
+      "priority": "P1"
+    },
+    {
+      "id": "emoji-005",
+      "label": "エラー状態",
+      "text": "❌ エラー発生",
+      "js_length": 3,
+      "visual_length": 7,
+      "priority": "P1"
+    },
+    {
+      "id": "emoji-006",
+      "label": "警告状態",
+      "text": "⚠️ 警告メッセージ",
+      "js_length": 3,
+      "visual_length": 9,
+      "priority": "P1"
+    },
+    {
+      "id": "emoji-007",
+      "label": "エージェント関連",
+      "text": "🤖 エージェント応答",
+      "js_length": 3,
+      "visual_length": 10,
+      "priority": "P1"
+    },
+    {
+      "id": "emoji-008",
+      "label": "タスク関連",
+      "text": "📝 タスク作成",
+      "js_length": 3,
+      "visual_length": 7,
+      "priority": "P1"
+    },
+    {
+      "id": "emoji-009",
+      "label": "お祝い",
+      "text": "🎉 成功しました",
+      "js_length": 3,
+      "visual_length": 9,
+      "priority": "P1"
+    },
+    {
+      "id": "emoji-010",
+      "label": "挨拶（顔文字入り）",
+      "text": "👨‍💻 マナベさんこんにちは😊",
+      "js_length": 8,
+      "visual_length": 16,
+      "priority": "P1"
+    },
+    {
+      "id": "emoji-011",
+      "label": "複数絵文字混在",
+      "text": "🇯🇵📱🔔 モバイル通知",
+      "js_length": 6,
+      "visual_length": 11,
+      "priority": "P2"
+    },
+    {
+      "id": "emoji-012",
+      "label": "肌の色バリエーション",
+      "text": "👋🏻👋🏼👋🏽👋🏾👋🏿 こんにちは",
+      "js_length": 13,
+      "visual_length": 16,
+      "priority": "P2"
+    },
+    {
+      "id": "emoji-013",
+      "label": "家族絵文字",
+      "text": "👨‍👩‍👧‍👦 家族でテスト",
+      "js_length": 9,
+      "visual_length": 10,
+      "priority": "P2"
+    },
+    {
+      "id": "emoji-014",
+      "label": "職種絵文字",
+      "text": "👨‍💻👩‍💻👨‍🎨👩‍🎨 チームメンバー",
+      "js_length": 13,
+      "visual_length": 16,
+      "priority": "P2"
+    },
+    {
+      "id": "emoji-015",
+      "label": "絵文字連続",
+      "text": "😀😃😄😁😆😅🤣😂🙂🙃😉😊😇🥰😍🤩😘",
+      "js_length": 34,
+      "visual_length": 17,
+      "priority": "P2"
+    }
+  ]
+}

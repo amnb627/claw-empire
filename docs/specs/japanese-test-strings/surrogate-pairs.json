@@ -1,0 +1,140 @@
+{
+  "name": "サロゲートペアセット",
+  "category": "surrogate_pairs",
+  "description": "U+10000以上の文字（サロゲートペア）のテスト",
+  "version": "1.0.0",
+  "created": "2026-03-08",
+  "note": "サロゲートペアはJavaScriptでは文字列長2としてカウントされるが、見た目は1文字",
+  "strings": [
+    {
+      "id": "surrogate-001",
+      "label": "つちよし（𠮷）",
+      "text": "𠮷",
+      "code_point": "U+20BB7",
+      "js_length": 2,
+      "visual_length": 1,
+      "priority": "P0"
+    },
+    {
+      "id": "surrogate-002",
+      "label": "𠮷野屋",
+      "text": "𠮷野屋",
+      "js_length": 4,
+      "visual_length": 3,
+      "priority": "P0"
+    },
+    {
+      "id": "surrogate-003",
+      "label": "𠮷田",
+      "text": "𠮷田",
+      "js_length": 3,
+      "visual_length": 2,
+      "priority": "P0"
+    },
+    {
+      "id": "surrogate-004",
+      "label": "ほっけ（𩸽）",
+      "text": "𩸽",
+      "code_point": "U+29CFD",
+      "js_length": 2,
+      "visual_length": 1,
+      "priority": "P0"
+    },
+    {
+      "id": "surrogate-005",
+      "label": "𩸽定食",
+      "text": "𩸽定食",
+      "js_length": 4,
+      "visual_length": 3,
+      "priority": "P0"
+    },
+    {
+      "id": "surrogate-006",
+      "label": "はしごたか（髙）",
+      "text": "髙橋",
+      "note": "髙は「たか」の異体字（はしごたか）",
+      "js_length": 3,
+      "visual_length": 2,
+      "priority": "P1"
+    },
+    {
+      "id": "surrogate-007",
+      "label": "たつさき（﨑）",
+      "text": "﨑",
+      "code_point": "U+FA11",
+      "js_length": 2,
+      "visual_length": 1,
+      "priority": "P1"
+    },
+    {
+      "id": "surrogate-008",
+      "label": "𠮷連続",
+      "text": "𠮷𠮷𠮷",
+      "js_length": 6,
+      "visual_length": 3,
+      "priority": "P0"
+    },
+    {
+      "id": "surrogate-009",
+      "label": "かつしか（葛の旧字体）",
+      "text": "葛飾区",
+      "note": "葛の旧字体はサロゲートペア",
+      "js_length": 4,
+      "visual_length": 3,
+      "priority": "P1"
+    },
+    {
+      "id": "surrogate-010",
+      "label": "しんさき（神の異体字）",
+      "text": "神羽",
+      "note": "羽は神の異体字（⻌が異なる）",
+      "js_length": 3,
+      "visual_length": 2,
+      "priority": "P1"
+    },
+    {
+      "id": "surrogate-011",
+      "label": "とくのしま（徳の異体字）",
+      "text": "徳島",
+      "note": "徳の異体字",
+      "js_length": 3,
+      "visual_length": 2,
+      "priority": "P1"
+    },
+    {
+      "id": "surrogate-012",
+      "label": "しぶや（渋の異体字）",
+      "text": "澁谷",
+      "note": "澁は渋の異体字（三点水）",
+      "js_length": 3,
+      "visual_length": 2,
+      "priority": "P1"
+    },
+    {
+      "id": "surrogate-013",
+      "label": "おお（大の異体字）",
+      "text": "𰳞",
+      "code_point": "U+30CDE",
+      "js_length": 2,
+      "visual_length": 1,
+      "priority": "P2"
+    },
+    {
+      "id": "surrogate-014",
+      "label": "たけ（竹の異体字）",
+      "text": "𥫗",
+      "code_point": "U+25AD7",
+      "js_length": 2,
+      "visual_length": 1,
+      "priority": "P2"
+    },
+    {
+      "id": "surrogate-015",
+      "label": "サロゲートペア混在文",
+      "text": "𠮷野屋で𩸽定食を食べました。髙橋さんと神羽さんも一緒でした。",
+      "js_length": 32,
+      "visual_length": 27,
+      "priority": "P1"
+    }
+  ]
+}
