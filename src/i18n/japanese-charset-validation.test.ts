@@ -13,7 +13,7 @@ import {
   verifyUtf8Encoding,
   runAllCharsetTests,
   type EncodingTestResult,
-} from "./japanese-charset.test";
+} from "./japanese-charset";
 
 describe("Japanese Charset UTF-8 Encoding Tests", () => {
   describe("基本文字セット", () => {
