@@ -77,7 +77,7 @@ const MOJIBAKE_PATTERNS: MojibakePattern[] = [
   // replacement character
   {
     name: "replacement-character",
-    regex: //g,
+    regex: /\uFFFD/g,
     severity: MojibakeLogLevel.ERROR,
     description: "文字のデコードに失敗した Replacement Character",
     suggestion: "入力データのエンコーディングを確認",
@@ -121,7 +121,7 @@ const MOJIBAKE_PATTERNS: MojibakePattern[] = [
   // BOM検出
   {
     name: "bom-detected",
-    regex: /^\uFEFF/,
+    regex: /^\uFEFF/g,
     severity: MojibakeLogLevel.INFO,
     description: "BOM（Byte Order Mark）が検出されました",
   },
