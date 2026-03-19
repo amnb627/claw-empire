@@ -1,5 +1,6 @@
 import path from "node:path";
 import { resolveWorkflowPackKeyForTask } from "../packs/task-pack-resolver.ts";
+import { calculateXp, countAgentStreak, countSubtasks } from "./xp-calculator.ts";
 
 type CreateReportWorkflowToolsDeps = Record<string, any>;
 
@@ -158,6 +159,34 @@ export function createReportWorkflowTools(deps: CreateReportWorkflowToolsDeps) {
     reviewRoundState.delete(task.id);
     reviewInFlight.delete(task.id);
     endTaskExecutionSession(task.id, "task_done_no_review");
+
+    // Award XP for report tasks that bypass review
+    if (task.assigned_agent_id) {
+      const fullTask = db.prepare("SELECT priority, task_type, source_task_id FROM tasks WHERE id = ?").get(task.id) as
+        | { priority: number; task_type: string | null; source_task_id: string | null }
+        | undefined;
+      const agentRow = db.prepare("SELECT role FROM agents WHERE id = ?").get(task.assigned_agent_id) as
+        | { role: string }
+        | undefined;
+      if (fullTask) {
+        const xpResult = calculateXp({
+          priority: fullTask.priority ?? 0,
+          taskType: fullTask.task_type,
+          sourceTaskId: fullTask.source_task_id,
+          subtaskCount: countSubtasks(db, task.id),
+          agentRole: agentRow?.role ?? "junior",
+          streakCount: countAgentStreak(db, task.assigned_agent_id),
+        });
+        db.prepare(
+          "UPDATE agents SET stats_tasks_done = stats_tasks_done + 1, stats_xp = stats_xp + ? WHERE id = ?",
+        ).run(xpResult.total, task.assigned_agent_id);
+        appendTaskLog(
+          task.id,
+          "system",
+          `XP awarded (no-review): ${xpResult.total} (base=${xpResult.base} complexity=${xpResult.complexity} type=${xpResult.type} collab=${xpResult.collaboration} subtask=${xpResult.subtask} streak=${xpResult.streak})`,
+        );
+      }
+    }
 
     const updatedTask = db.prepare("SELECT * FROM tasks WHERE id = ?").get(task.id);
     broadcast("task_update", updatedTask);

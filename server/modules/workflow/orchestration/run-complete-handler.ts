@@ -6,6 +6,7 @@ import {
   resolveVideoArtifactSpecForTask,
 } from "../packs/video-artifact.ts";
 import { evaluateRemotionOnlyGateFromLogFiles } from "../packs/video-render-engine-gate.ts";
+import { calculateXp, countAgentStreak, countSubtasks } from "./xp-calculator.ts";
 
 type CreateRunCompleteHandlerDeps = Record<string, any>;
 
@@ -66,6 +67,7 @@ export function createRunCompleteHandler(deps: CreateRunCompleteHandlerDeps) {
           description: string | null;
           status: string;
           task_type: string | null;
+          priority: number;
           workflow_pack_key: string | null;
           project_id: string | null;
           project_path: string | null;
@@ -288,9 +290,25 @@ export function createRunCompleteHandler(deps: CreateRunCompleteHandlerDeps) {
       db.prepare("UPDATE agents SET status = 'idle', current_task_id = NULL WHERE id = ?").run(task.assigned_agent_id);
 
       if (finalExitCode === 0) {
+        const agentRow = db.prepare("SELECT role FROM agents WHERE id = ?").get(task.assigned_agent_id) as
+          | { role: string }
+          | undefined;
+        const xpResult = calculateXp({
+          priority: (task as any).priority ?? 0,
+          taskType: task.task_type,
+          sourceTaskId: task.source_task_id,
+          subtaskCount: countSubtasks(db, taskId),
+          agentRole: agentRow?.role ?? "junior",
+          streakCount: countAgentStreak(db, task.assigned_agent_id!),
+        });
         db.prepare(
-          "UPDATE agents SET stats_tasks_done = stats_tasks_done + 1, stats_xp = stats_xp + 10 WHERE id = ?",
-        ).run(task.assigned_agent_id);
+          "UPDATE agents SET stats_tasks_done = stats_tasks_done + 1, stats_xp = stats_xp + ? WHERE id = ?",
+        ).run(xpResult.total, task.assigned_agent_id);
+        appendTaskLog(
+          taskId,
+          "system",
+          `XP awarded: ${xpResult.total} (base=${xpResult.base} complexity=${xpResult.complexity} type=${xpResult.type} collab=${xpResult.collaboration} subtask=${xpResult.subtask} streak=${xpResult.streak})`,
+        );
       }
 
       const agent = db.prepare("SELECT * FROM agents WHERE id = ?").get(task.assigned_agent_id) as
