@@ -1,5 +1,6 @@
 import { expect, test, type APIRequestContext, type APIResponse } from "@playwright/test";
 import path from "node:path";
+import { cleanupE2EResources } from "./cleanup";
 
 type AgentResponse = {
   ok: boolean;
@@ -145,145 +146,157 @@ test.describe("CI API ops and docs coverage", () => {
   test("pause + inject + resume flow exposes interrupt control contract", async ({ request }) => {
     const seed = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
     const deptId = `ci_pause_dept_${seed}`;
+    const cleanup = {
+      taskIds: [] as string[],
+      agentIds: [] as string[],
+      departmentIds: [deptId],
+      projectIds: [] as string[],
+    };
 
-    const csrfToken = await establishApiSession(request);
+    try {
+      const csrfToken = await establishApiSession(request);
 
-    await expectOkJson(
-      await request.post("/api/departments", {
-        data: {
-          id: deptId,
-          name: `Pause Dept ${seed}`,
-          icon: "P",
-          color: "#2563eb",
-        },
-      }),
-      "POST /api/departments",
-    );
+      await expectOkJson(
+        await request.post("/api/departments", {
+          data: {
+            id: deptId,
+            name: `Pause Dept ${seed}`,
+            icon: "P",
+            color: "#2563eb",
+          },
+        }),
+        "POST /api/departments",
+      );
 
-    const agent = await expectOkJson<AgentResponse>(
-      await request.post("/api/agents", {
-        data: {
-          name: `pause-agent-${seed}`,
-          department_id: deptId,
-          role: "senior",
-          cli_provider: "api",
-          avatar_emoji: "P",
-        },
-      }),
-      "POST /api/agents",
-    );
-    const agentId = agent.agent.id;
+      const agent = await expectOkJson<AgentResponse>(
+        await request.post("/api/agents", {
+          data: {
+            name: `pause-agent-${seed}`,
+            department_id: deptId,
+            role: "senior",
+            cli_provider: "api",
+            avatar_emoji: "P",
+          },
+        }),
+        "POST /api/agents",
+      );
+      const agentId = agent.agent.id;
+      cleanup.agentIds.push(agentId);
 
-    const task = await expectOkJson<TaskResponse>(
-      await request.post("/api/tasks", {
-        data: {
-          title: `pause-task-${seed}`,
-          department_id: deptId,
-          assigned_agent_id: agentId,
-          status: "planned",
-        },
-      }),
-      "POST /api/tasks",
-    );
-    const taskId = task.id ?? task.task.id;
+      const task = await expectOkJson<TaskResponse>(
+        await request.post("/api/tasks", {
+          data: {
+            title: `pause-task-${seed}`,
+            department_id: deptId,
+            assigned_agent_id: agentId,
+            status: "planned",
+          },
+        }),
+        "POST /api/tasks",
+      );
+      const taskId = task.id ?? task.task.id;
+      cleanup.taskIds.push(taskId);
 
-    const terminalBeforePause = await expectOkJson<{
-      ok: boolean;
-      interrupt: InterruptProof | null;
-    }>(await request.get(`/api/tasks/${taskId}/terminal?lines=50`), "GET /api/tasks/:id/terminal (before pause)");
-    expect(terminalBeforePause.ok).toBe(true);
-    expect(terminalBeforePause.interrupt).not.toBeNull();
+      const terminalBeforePause = await expectOkJson<{
+        ok: boolean;
+        interrupt: InterruptProof | null;
+      }>(await request.get(`/api/tasks/${taskId}/terminal?lines=50`), "GET /api/tasks/:id/terminal (before pause)");
+      expect(terminalBeforePause.ok).toBe(true);
+      expect(terminalBeforePause.interrupt).not.toBeNull();
 
-    const interruptProof = terminalBeforePause.interrupt as InterruptProof;
-    expect(interruptProof.session_id.length).toBeGreaterThan(0);
-    expect(interruptProof.control_token.length).toBeGreaterThan(0);
-    expect(interruptProof.requires_csrf).toBe(true);
+      const interruptProof = terminalBeforePause.interrupt as InterruptProof;
+      expect(interruptProof.session_id.length).toBeGreaterThan(0);
+      expect(interruptProof.control_token.length).toBeGreaterThan(0);
+      expect(interruptProof.requires_csrf).toBe(true);
 
-    const pauseRes = await expectOkJson<{
-      ok: boolean;
-      status: string;
-      interrupt: InterruptProof | null;
-    }>(
-      await request.post(`/api/tasks/${taskId}/stop`, {
-        data: {
-          mode: "pause",
-          session_id: interruptProof.session_id,
-          interrupt_token: interruptProof.control_token,
-        },
-        headers: {
-          "x-csrf-token": csrfToken,
-        },
-      }),
-      "POST /api/tasks/:id/stop",
-    );
-    expect(pauseRes.ok).toBe(true);
-    expect(pauseRes.status).toBe("pending");
-    expect(pauseRes.interrupt?.session_id).toBe(interruptProof.session_id);
+      const pauseRes = await expectOkJson<{
+        ok: boolean;
+        status: string;
+        interrupt: InterruptProof | null;
+      }>(
+        await request.post(`/api/tasks/${taskId}/stop`, {
+          data: {
+            mode: "pause",
+            session_id: interruptProof.session_id,
+            interrupt_token: interruptProof.control_token,
+          },
+          headers: {
+            "x-csrf-token": csrfToken,
+          },
+        }),
+        "POST /api/tasks/:id/stop",
+      );
+      expect(pauseRes.ok).toBe(true);
+      expect(pauseRes.status).toBe("pending");
+      expect(pauseRes.interrupt?.session_id).toBe(interruptProof.session_id);
 
-    const injectRes = await expectOkJson<{
-      ok: boolean;
-      queued: boolean;
-      session_id: string;
-      pending_count: number;
-    }>(
-      await request.post(`/api/tasks/${taskId}/inject`, {
-        data: {
-          prompt: "Summarize the latest state before resuming.",
-          session_id: interruptProof.session_id,
-          interrupt_token: interruptProof.control_token,
-        },
-        headers: {
-          "x-csrf-token": csrfToken,
-        },
-      }),
-      "POST /api/tasks/:id/inject",
-    );
-    expect(injectRes.ok).toBe(true);
-    expect(injectRes.queued).toBe(true);
-    expect(injectRes.session_id).toBe(interruptProof.session_id);
-    expect(injectRes.pending_count).toBeGreaterThan(0);
+      const injectRes = await expectOkJson<{
+        ok: boolean;
+        queued: boolean;
+        session_id: string;
+        pending_count: number;
+      }>(
+        await request.post(`/api/tasks/${taskId}/inject`, {
+          data: {
+            prompt: "Summarize the latest state before resuming.",
+            session_id: interruptProof.session_id,
+            interrupt_token: interruptProof.control_token,
+          },
+          headers: {
+            "x-csrf-token": csrfToken,
+          },
+        }),
+        "POST /api/tasks/:id/inject",
+      );
+      expect(injectRes.ok).toBe(true);
+      expect(injectRes.queued).toBe(true);
+      expect(injectRes.session_id).toBe(interruptProof.session_id);
+      expect(injectRes.pending_count).toBeGreaterThan(0);
 
-    const minutesRes = await expectOkJson<{ meetings: unknown[] }>(
-      await request.get(`/api/tasks/${taskId}/meeting-minutes`),
-      "GET /api/tasks/:id/meeting-minutes",
-    );
-    expect(Array.isArray(minutesRes.meetings)).toBe(true);
+      const minutesRes = await expectOkJson<{ meetings: unknown[] }>(
+        await request.get(`/api/tasks/${taskId}/meeting-minutes`),
+        "GET /api/tasks/:id/meeting-minutes",
+      );
+      expect(Array.isArray(minutesRes.meetings)).toBe(true);
 
-    await expectOkJson(
-      await request.patch(`/api/agents/${agentId}`, {
-        data: {
-          status: "offline",
-        },
-      }),
-      "PATCH /api/agents/:id(status=offline)",
-    );
+      await expectOkJson(
+        await request.patch(`/api/agents/${agentId}`, {
+          data: {
+            status: "offline",
+          },
+        }),
+        "PATCH /api/agents/:id(status=offline)",
+      );
 
-    const resumeRes = await expectOkJson<{
-      ok: boolean;
-      status: string;
-      auto_resumed: boolean;
-    }>(
-      await request.post(`/api/tasks/${taskId}/resume`, {
-        data: {
-          session_id: interruptProof.session_id,
-          interrupt_token: interruptProof.control_token,
-        },
-        headers: {
-          "x-csrf-token": csrfToken,
-        },
-      }),
-      "POST /api/tasks/:id/resume",
-    );
-    expect(resumeRes.ok).toBe(true);
-    expect(resumeRes.status).toBe("planned");
-    expect(resumeRes.auto_resumed).toBe(false);
+      const resumeRes = await expectOkJson<{
+        ok: boolean;
+        status: string;
+        auto_resumed: boolean;
+      }>(
+        await request.post(`/api/tasks/${taskId}/resume`, {
+          data: {
+            session_id: interruptProof.session_id,
+            interrupt_token: interruptProof.control_token,
+          },
+          headers: {
+            "x-csrf-token": csrfToken,
+          },
+        }),
+        "POST /api/tasks/:id/resume",
+      );
+      expect(resumeRes.ok).toBe(true);
+      expect(resumeRes.status).toBe("planned");
+      expect(resumeRes.auto_resumed).toBe(false);
 
-    const taskAfterResume = await expectOkJson<TaskResponse>(
-      await request.get(`/api/tasks/${taskId}`),
-      "GET /api/tasks/:id",
-    );
-    expect(taskAfterResume.task.status).toBe("planned");
-    expect(taskAfterResume.task.assigned_agent_id).toBe(agentId);
+      const taskAfterResume = await expectOkJson<TaskResponse>(
+        await request.get(`/api/tasks/${taskId}`),
+        "GET /api/tasks/:id",
+      );
+      expect(taskAfterResume.task.status).toBe("planned");
+      expect(taskAfterResume.task.assigned_agent_id).toBe(agentId);
+    } finally {
+      await cleanupE2EResources(request, cleanup);
+    }
   });
 
   test("project path helpers + api provider CRUD + ops diagnostics are reachable in CI", async ({ request }) => {
@@ -396,127 +409,143 @@ test.describe("CI API ops and docs coverage", () => {
     const deptId = `ci_run_dept_${seed}`;
     const taskTitle = `ci-run-task-${seed}`;
     const directiveTitle = `ci-inbox-directive-${seed}`;
-    await establishApiSession(request);
+    const cleanup = {
+      apiProviderIds: [] as string[],
+      taskIds: [] as string[],
+      agentIds: [] as string[],
+      departmentIds: [deptId],
+      projectIds: [] as string[],
+    };
+    try {
+      await establishApiSession(request);
 
-    const provider = await expectOkJson<{ ok: boolean; id: string }>(
-      await request.post("/api/api-providers", {
-        data: {
-          name: `ci-run-provider-${seed}`,
-          type: "openai",
-          base_url: "http://127.0.0.1:9/v1",
-          api_key: "ci-test-key",
-          enabled: true,
-          models_cache: JSON.stringify(["ci-test-model"]),
-        },
-      }),
-      "POST /api/api-providers(run)",
-    );
-
-    await expectOkJson(
-      await request.post("/api/departments", {
-        data: {
-          id: deptId,
-          name: `Run Dept ${seed}`,
-          icon: "R",
-          color: "#0891b2",
-        },
-      }),
-      "POST /api/departments(run)",
-    );
-
-    const agent = await expectOkJson<AgentResponse>(
-      await request.post("/api/agents", {
-        data: {
-          name: `run-agent-${seed}`,
-          department_id: deptId,
-          role: "team_leader",
-          cli_provider: "api",
-          api_provider_id: provider.id,
-          api_model: "ci-test-model",
-          avatar_emoji: "R",
-        },
-      }),
-      "POST /api/agents(run)",
-    );
-    const agentId = agent.agent.id;
-
-    const createProjectRes = await request.post("/api/projects", {
-      data: {
-        name: `ci-run-project-${seed}`,
-        project_path: repoPath,
-        core_goal: "Verify task run route and inbox webhook in CI",
-      },
-    });
-    let projectId = "";
-    if (createProjectRes.ok()) {
-      const project = await expectOkJson<{ ok: boolean; project: { id: string } }>(
-        createProjectRes,
-        "POST /api/projects(run)",
+      const provider = await expectOkJson<{ ok: boolean; id: string }>(
+        await request.post("/api/api-providers", {
+          data: {
+            name: `ci-run-provider-${seed}`,
+            type: "openai",
+            base_url: "http://127.0.0.1:9/v1",
+            api_key: "ci-test-key",
+            enabled: true,
+            models_cache: JSON.stringify(["ci-test-model"]),
+          },
+        }),
+        "POST /api/api-providers(run)",
       );
-      projectId = project.project.id;
-    } else if (createProjectRes.status() === 409) {
-      const conflict = await createProjectRes.json();
-      projectId = String(conflict.existing_project_id ?? "");
-      expect(projectId).toBeTruthy();
-    } else {
-      const text = await createProjectRes.text();
-      throw new Error(`POST /api/projects(run) failed (status=${createProjectRes.status()}): ${text.slice(0, 1000)}`);
+      cleanup.apiProviderIds.push(provider.id);
+
+      await expectOkJson(
+        await request.post("/api/departments", {
+          data: {
+            id: deptId,
+            name: `Run Dept ${seed}`,
+            icon: "R",
+            color: "#0891b2",
+          },
+        }),
+        "POST /api/departments(run)",
+      );
+
+      const agent = await expectOkJson<AgentResponse>(
+        await request.post("/api/agents", {
+          data: {
+            name: `run-agent-${seed}`,
+            department_id: deptId,
+            role: "team_leader",
+            cli_provider: "api",
+            api_provider_id: provider.id,
+            api_model: "ci-test-model",
+            avatar_emoji: "R",
+          },
+        }),
+        "POST /api/agents(run)",
+      );
+      const agentId = agent.agent.id;
+      cleanup.agentIds.push(agentId);
+
+      const createProjectRes = await request.post("/api/projects", {
+        data: {
+          name: `ci-run-project-${seed}`,
+          project_path: repoPath,
+          core_goal: "Verify task run route and inbox webhook in CI",
+        },
+      });
+      let projectId = "";
+      if (createProjectRes.ok()) {
+        const project = await expectOkJson<{ ok: boolean; project: { id: string } }>(
+          createProjectRes,
+          "POST /api/projects(run)",
+        );
+        projectId = project.project.id;
+        cleanup.projectIds.push(projectId);
+      } else if (createProjectRes.status() === 409) {
+        const conflict = await createProjectRes.json();
+        projectId = String(conflict.existing_project_id ?? "");
+        expect(projectId).toBeTruthy();
+      } else {
+        const text = await createProjectRes.text();
+        throw new Error(`POST /api/projects(run) failed (status=${createProjectRes.status()}): ${text.slice(0, 1000)}`);
+      }
+
+      const task = await expectOkJson<TaskResponse>(
+        await request.post("/api/tasks", {
+          data: {
+            title: taskTitle,
+            department_id: deptId,
+            assigned_agent_id: agentId,
+            project_id: projectId,
+            project_path: repoPath,
+            status: "planned",
+          },
+        }),
+        "POST /api/tasks(run)",
+      );
+      const taskId = task.id ?? task.task.id;
+      cleanup.taskIds.push(taskId);
+
+      const runRes = await expectOkJson<{ ok: boolean; pid: number; cwd: string; worktree: boolean }>(
+        await request.post(`/api/tasks/${taskId}/run`),
+        "POST /api/tasks/:id/run",
+      );
+      expect(runRes.ok).toBe(true);
+      expect(Number.isInteger(runRes.pid)).toBe(true);
+      expect(runRes.pid).not.toBe(0);
+      expect(runRes.worktree).toBe(true);
+      expect(runRes.cwd).toContain(`${path.sep}.climpire-worktrees${path.sep}`);
+
+      const terminalAfterRun = await waitForTerminalMarker(request, taskId, "RUN start", 20_000);
+      expect(
+        terminalAfterRun.text.includes("RUN start") ||
+          (terminalAfterRun.task_logs ?? []).some((entry) => (entry.message ?? "").includes("RUN start")),
+      ).toBe(true);
+
+      const inboxRes = await expectOkJson<{ ok: boolean; directive: boolean; routed: string }>(
+        await request.post("/api/inbox", {
+          data: {
+            source: "telegram",
+            text: `$${directiveTitle} @${deptId}`,
+            author: "CI",
+            project_id: projectId,
+            project_path: repoPath,
+            project_context: "Verify inbox directive webhook in CI",
+            skipPlannedMeeting: true,
+          },
+          headers: {
+            "x-inbox-secret": E2E_INBOX_WEBHOOK_SECRET,
+          },
+        }),
+        "POST /api/inbox",
+      );
+      expect(inboxRes.ok).toBe(true);
+      expect(inboxRes.directive).toBe(true);
+      expect(inboxRes.routed).toBe("announcement");
+
+      const inboxTask = await waitForTask(request, (candidate) => candidate.title.includes(directiveTitle), 20_000);
+      cleanup.taskIds.push(inboxTask.id);
+      expect(inboxTask.project_id).toBe(projectId);
+    } finally {
+      // Async directive/run flows are reset at the whole-run level.
     }
-
-    const task = await expectOkJson<TaskResponse>(
-      await request.post("/api/tasks", {
-        data: {
-          title: taskTitle,
-          department_id: deptId,
-          assigned_agent_id: agentId,
-          project_id: projectId,
-          project_path: repoPath,
-          status: "planned",
-        },
-      }),
-      "POST /api/tasks(run)",
-    );
-    const taskId = task.id ?? task.task.id;
-
-    const runRes = await expectOkJson<{ ok: boolean; pid: number; cwd: string; worktree: boolean }>(
-      await request.post(`/api/tasks/${taskId}/run`),
-      "POST /api/tasks/:id/run",
-    );
-    expect(runRes.ok).toBe(true);
-    expect(Number.isInteger(runRes.pid)).toBe(true);
-    expect(runRes.pid).not.toBe(0);
-    expect(runRes.worktree).toBe(true);
-    expect(runRes.cwd).toContain(`${path.sep}.climpire-worktrees${path.sep}`);
-
-    const terminalAfterRun = await waitForTerminalMarker(request, taskId, "RUN start", 20_000);
-    expect(
-      terminalAfterRun.text.includes("RUN start") ||
-        (terminalAfterRun.task_logs ?? []).some((entry) => (entry.message ?? "").includes("RUN start")),
-    ).toBe(true);
-
-    const inboxRes = await expectOkJson<{ ok: boolean; directive: boolean; routed: string }>(
-      await request.post("/api/inbox", {
-        data: {
-          source: "telegram",
-          text: `$${directiveTitle} @${deptId}`,
-          author: "CI",
-          project_id: projectId,
-          project_path: repoPath,
-          project_context: "Verify inbox directive webhook in CI",
-          skipPlannedMeeting: true,
-        },
-        headers: {
-          "x-inbox-secret": E2E_INBOX_WEBHOOK_SECRET,
-        },
-      }),
-      "POST /api/inbox",
-    );
-    expect(inboxRes.ok).toBe(true);
-    expect(inboxRes.directive).toBe(true);
-    expect(inboxRes.routed).toBe("announcement");
-
-    const inboxTask = await waitForTask(request, (candidate) => candidate.title.includes(directiveTitle), 20_000);
-    expect(inboxTask.project_id).toBe(projectId);
   });
 
   test("swagger bootstrap and openapi contract expose CI-critical paths", async ({ request }) => {

@@ -222,6 +222,7 @@ export default function AgentFormModal({
                   {tr("이모지", "Emoji")}
                 </label>
                 <EmojiPicker
+                  tr={tr}
                   value={form.avatar_emoji}
                   onChange={(emoji) => setForm({ ...form, avatar_emoji: emoji })}
                 />

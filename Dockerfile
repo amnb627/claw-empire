@@ -1,72 +1,42 @@
-# Claw Empire Dockerfile
-# Multi-stage build for production deployment
-
-# Build stage
-FROM node:22-bookworm-slim AS builder
-
-# Set UTF-8 locale explicitly for Japanese text support
-ENV LANG=C.UTF-8 \
-    LC_ALL=C.UTF-8 \
-    NODE_ENV=production
+FROM node:22-bookworm-slim
 
 WORKDIR /app
 
-# Install pnpm
-RUN npm install -g pnpm@10.30.1
+RUN apt-get update && apt-get install -y --no-install-recommends \
+  git \
+  bash \
+  openssh-client \
+  ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
 
-# Copy package files
+RUN corepack enable
+
+# Install CLI providers used by Claw-Empire agent runtime
+RUN npm install -g \
+  @anthropic-ai/claude-code \
+  @openai/codex \
+  @google/gemini-cli \
+  opencode-ai
+
+# Create unprivileged runtime user
+ARG APP_UID=10001
+ARG APP_GID=10001
+RUN groupadd --gid ${APP_GID} app \
+  && useradd --uid ${APP_UID} --gid ${APP_GID} --create-home --shell /bin/bash app
+
 COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
 
-# Install dependencies
-RUN pnpm install --frozen-lockfile --prod=false
-
-# Copy source code
 COPY . .
+RUN pnpm build
 
-# Build application
-RUN pnpm run build
+# Ensure runtime paths are writable by non-root user
+RUN mkdir -p /app/data /home/app/.claude /home/app/.codex /home/app/.gemini /home/app/.local/share/opencode \
+  && chown -R app:app /app /home/app
 
-# Production stage
-FROM node:22-bookworm-slim AS production
+ENV HOME=/home/app
+USER app
 
-# Set UTF-8 locale explicitly for Japanese text support
-ENV LANG=C.UTF-8 \
-    LC_ALL=C.UTF-8 \
-    NODE_ENV=production \
-    PORT=3000
+EXPOSE 8790
 
-WORKDIR /app
-
-# Install pnpm
-RUN npm install -g pnpm@10.30.1
-
-# Copy package files
-COPY package.json pnpm-lock.yaml ./
-
-# Install production dependencies only
-RUN pnpm install --frozen-lockfile --prod
-
-# Copy built assets from builder
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/build ./build
-COPY --from=builder /app/public ./public
-
-# Copy server files
-COPY server ./server
-
-# Create non-root user for security
-RUN groupadd -r climpire && \
-    useradd -r -g climpire -u 1001 -s /bin/bash -m climpire && \
-    chown -R climpire:climpire /app
-
-USER climpire
-
-# Expose port
-EXPOSE 3000
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD node -e "require('http').get('http://localhost:3000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
-
-# Start application
-CMD ["pnpm", "start"]
+CMD ["pnpm", "start:tailscale"]

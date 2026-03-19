@@ -6,22 +6,22 @@
 
 <p align="center">
   <strong>Command Your AI Agent Empire from the CEO Desk</strong><br>
-  A local-first AI agent office simulator that orchestrates <b>CLI</b>, <b>OAuth</b>, and <b>API-connected</b> providers (including <b>Claude Code</b>, <b>Codex CLI</b>, <b>Gemini CLI</b>, <b>OpenCode</b>, <b>GitHub Copilot</b>, and <b>Antigravity</b>) as a virtual company of autonomous agents.
+  A local-first AI agent office simulator that orchestrates <b>CLI</b>, <b>OAuth</b>, and <b>API-connected</b> providers (including <b>Claude Code</b>, <b>Codex CLI</b>, <b>Gemini CLI</b>, <b>OpenCode</b>, <b>Kimi Code</b>, <b>GitHub Copilot</b>, and <b>Antigravity</b>) as a virtual company of autonomous agents.
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-2.0.2-blue" alt="Releases" />
+  <img src="https://img.shields.io/badge/version-2.0.4-blue" alt="Releases" />
   <a href="https://github.com/GreenSheep01201/claw-empire/actions/workflows/ci.yml"><img src="https://github.com/GreenSheep01201/claw-empire/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI" /></a>
   <img src="https://img.shields.io/badge/node-%3E%3D22-brightgreen" alt="Node.js 22+" />
   <img src="https://img.shields.io/badge/license-Apache%202.0-orange" alt="License" />
   <img src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey" alt="Platform" />
-  <img src="https://img.shields.io/badge/AI-Claude%20%7C%20Codex%20%7C%20Gemini%20%7C%20OpenCode%20%7C%20Copilot%20%7C%20Antigravity-purple" alt="AI Agents" />
+  <img src="https://img.shields.io/badge/AI-Claude%20%7C%20Codex%20%7C%20Gemini%20%7C%20OpenCode%20%7C%20Kimi%20%7C%20Copilot%20%7C%20Antigravity-purple" alt="AI Agents" />
 </p>
 
 <p align="center">
   <a href="#quick-start">Quick Start</a> &middot;
   <a href="#ai-installation-guide">AI Install Guide</a> &middot;
-  <a href="docs/releases/v2.0.2.md">Release Notes</a> &middot;
+  <a href="docs/releases/v2.0.4.md">Release Notes</a> &middot;
   <a href="#openclaw-integration">OpenClaw</a> &middot;
   <a href="#direct-messenger-without-openclaw">Direct Messenger</a> &middot;
   <a href="#dollar-command-logic">$ Command</a> &middot;
@@ -29,6 +29,7 @@
   <a href="#screenshots">Screenshots</a> &middot;
   <a href="#tech-stack">Tech Stack</a> &middot;
   <a href="#cli-provider-setup">Providers</a> &middot;
+  <a href="#docker-deployment-quick-start">Docker Deploy</a> &middot;
   <a href="#security">Security</a>
 </p>
 
@@ -68,16 +69,16 @@ Claw-Empire transforms your AI coding assistants — connected via **CLI**, **OA
 
 ---
 
-## Latest Release (v2.0.2)
+## Latest Release (v2.0.4)
 
-- **OpenAPI drift is now blocked in CI** - `test:ci` now runs `openapi:check`, so route/document mismatches fail on `main` immediately.
-- **Operational API flows gained dedicated E2E coverage** - CI now exercises task run/stop/inject/resume, terminal and meeting-minutes access, inbox directive webhook routing, project path helpers, CLI diagnostics, and API provider CRUD.
-- **Docs endpoints and public API surface are covered** - `/api/docs`, swagger bootstrap, `/api/openapi.json`, and contributor-facing utility routes are now checked directly in CI.
-- **API docs were refreshed to match the real main-branch surface** - `docs/api.md` and `docs/openapi.json` now cover the contributor-facing ops/API routes added over time, including task reports, project helpers, subtasks, agent spawn, announcements/directives, GitHub/OAuth/skills/sprites/update-auto routes.
-- **E2E inbox verification uses a non-sensitive test secret** - CI no longer depends on any developer-local `.env` secret for `/api/inbox` coverage.
-- **PR #49, #52, and #55 follow-ups are included in the same release line** - PR #49 aligned Discord channel OpenAPI output with the real route and tightened test isolation, PR #55 added per-provider model search in API Settings, and the safe subset of PR #52 added portable Windows local dev launcher scripts.
+- **Docker deployment is now an officially documented path** - the repo now ships a production-oriented `Dockerfile`, `docker-compose.yml`, `.dockerignore`, and container-aware runtime path handling.
+- **Stale `working` agents recover automatically after interrupted runs** - lifecycle startup and interval sweeps now reset agents that are still marked `working` without a live `in_progress` task.
+- **Settings > API now supports official direct-API presets** - OpenCode Go and Bailian Coding Plan presets lock the expected Base URL, seed fallback models immediately, and keep refresh/retry behavior explicit.
+- **Kimi Code is now supported end to end** - Kimi is wired through CLI execution, provider labels, skills learn/unlearn flow, prompt-skill rendering, video-preprod bootstrap, and provider-aware schema/runtime checks.
+- **API model assignment now starts from the development pack and expands to initialized office packs** - `development` remains the default baseline, and office packs that have already been hydrated through initial setup also appear as assign targets.
+- **Local E2E validation is safer and cleaner** - `pnpm run test:e2e` now resets the isolated runtime before and after Playwright runs, and existing `8810` servers are no longer reused unless you explicitly opt in.
 
-- Full notes: [`docs/releases/v2.0.2.md`](docs/releases/v2.0.2.md)
+- Full notes: [`docs/releases/v2.0.4.md`](docs/releases/v2.0.4.md)
 - API docs: [`docs/api.md`](docs/api.md), [`docs/openapi.json`](docs/openapi.json)
 - Security policy: [`SECURITY.md`](SECURITY.md)
 
@@ -85,14 +86,14 @@ Claw-Empire transforms your AI coding assistants — connected via **CLI**, **OA
 
 Each office pack applies a different collaboration topology, naming seed, and workflow bias.
 
-| Pack | Core Focus | Representative Structure |
-| --- | --- | --- |
-| `development` (`DEV`) | Default engineering baseline with backward-compatible behavior | Planning / Development / Design / QA-QC / DevSecOps / Operations |
-| `report` (`RPT`) | Structured report and document production | Editorial Planning, Research Engine, Doc Design, Review Desk |
-| `web_research_report` (`WEB`) | Source collection and citation-first fact validation | Research Strategy, Crawler Team, Fact Check |
-| `novel` (`NOV`) | Worldbuilding, narrative flow, and tone consistency | Worldbuilding, Narrative Engine, Character Art, Tone QA |
-| `video_preprod` (`VID`) | Concept/script/shot-list/editing-note pre-production | Pre-production, Scene Engine, Art & Camera, Cut QA |
-| `roleplay` (`RPG`) | In-character dialogue immersion and role consistency | Character Planning, Dialogue Engine, Stage Art, Character QA |
+| Pack                          | Core Focus                                                     | Representative Structure                                         |
+| ----------------------------- | -------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `development` (`DEV`)         | Default engineering baseline with backward-compatible behavior | Planning / Development / Design / QA-QC / DevSecOps / Operations |
+| `report` (`RPT`)              | Structured report and document production                      | Editorial Planning, Research Engine, Doc Design, Review Desk     |
+| `web_research_report` (`WEB`) | Source collection and citation-first fact validation           | Research Strategy, Crawler Team, Fact Check                      |
+| `novel` (`NOV`)               | Worldbuilding, narrative flow, and tone consistency            | Worldbuilding, Narrative Engine, Character Art, Tone QA          |
+| `video_preprod` (`VID`)       | Concept/script/shot-list/editing-note pre-production           | Pre-production, Scene Engine, Art & Camera, Cut QA               |
+| `roleplay` (`RPG`)            | In-character dialogue immersion and role consistency           | Character Planning, Dialogue Engine, Stage Art, Character QA     |
 
 ## Screenshots
 
@@ -120,7 +121,7 @@ Each office pack applies a different collaboration topology, naming seed, and wo
 </td>
 <td width="50%">
 
-**Multi-Provider CLI** — Configure Claude Code, Codex, Gemini CLI, OpenCode with model selection
+**Multi-Provider CLI** — Configure Claude Code, Codex, Gemini CLI, OpenCode, and Kimi Code with model selection
 
 <img src="Sample_Img/CLI.png" alt="CLI Tools Settings" width="100%" />
 </td>
@@ -196,33 +197,33 @@ Usage path: **Chat window > Report Request button**, then enter your request.
 
 ## Features
 
-| Feature                        | Description                                                                                                                                                  |
-| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Pixel-Art Office**           | Animated office view with agents walking, working, and attending meetings across 6 departments                                                               |
-| **Workflow Pack Profiles**     | Six built-in workflow packs (`development`, `report`, `web_research_report`, `novel`, `video_preprod`, `roleplay`) provide pack-specific routing schema, QA rules, and output templates |
-| **Office Pack Profiles**       | Pack-scoped office profiles apply dedicated department topology, naming/theme presets, and isolated agent/department data per pack (except DB-backed development baseline) |
-| **Kanban Task Board**          | Full task lifecycle — Inbox, Planned, Collaborating, In Progress, Review, Done — with drag-and-drop                                                          |
-| **CEO Chat & Directives**      | Direct communication with team leaders; `$` directives support meeting choice plus project path/context routing (`project_path`, `project_context`)          |
-| **Multi-Provider Support**     | Claude Code, Codex CLI, Gemini CLI, OpenCode, Antigravity — all from one dashboard                                                                           |
-| **External API Providers**     | Connect agents to external LLM APIs (OpenAI, Anthropic, Google, Ollama, OpenRouter, Together, Groq, Cerebras, custom) via Settings > API tab                 |
-| **OAuth Integration**          | GitHub & Google OAuth with AES-encrypted token storage in local SQLite                                                                                       |
-| **Real-time WebSocket**        | Live status updates, activity feed, and agent state synchronization                                                                                          |
-| **Active Agent Control**       | Active-agent monitor with process/activity/idle metadata and direct kill action for stuck tasks                                                              |
-| **Task Report System**         | Completion popup, report history, team report drilldown, and planning-lead consolidated archive                                                              |
-| **Agent Management**           | Hire, edit, and delete agents with multilingual names, role/department/provider selection, and personality fields                                            |
-| **Agent Ranking & XP**         | Agents earn XP for completed tasks; ranking board tracks top performers                                                                                      |
-| **Skills Library**             | 600+ categorized skills (Frontend, Backend, Design, AI, DevOps, Security, etc.) with custom skill upload support                                             |
-| **Meeting System**             | Planned and ad-hoc meetings with AI-generated minutes and multi-round review                                                                                 |
-| **Git Worktree Isolation**     | Each agent works in isolated git branches, merged only on CEO approval                                                                                       |
-| **Multi-Language UI**          | English, Korean, Japanese, Chinese — auto-detected or manually set                                                                                           |
-| **Messenger Integration**      | Telegram, Discord, Slack and more — send `$` CEO directives and receive updates through built-in direct channel sessions (OpenClaw optional)                 |
-| **PowerPoint Export**          | Generate presentation slides from meeting minutes and reports                                                                                                |
-| **Connectivity QA Scripts**    | Built-in `test:comm:*` scripts for CLI/OAuth/API communication validation with retry and evidence logs                                                       |
-| **In-App Update Notice**       | Checks GitHub latest release and shows a top banner with OS-specific `git pull` guidance when a newer version is available                                   |
-| **Department Management**      | Planning, Development, Design, QA/QC, DevSecOps, Operations — with dedicated management tab for arrow/drag-and-drop sort order editing                       |
-| **Manual Agent Assignment**    | Assign specific agents to projects; meetings/delegation respect manual selection, with pre-save safeguards for no-agent or leader-only selections            |
-| **Sprite Registration Safety** | Prevents duplicate sprite-number file overwrite by rejecting conflicting uploads with explicit `409 sprite_number_exists` responses                          |
-| **Custom Skill Upload**        | Upload `.md` skill files through the UI to train CLI representatives with custom skills, complete with classroom training animation and management interface |
+| Feature                        | Description                                                                                                                                                                                                 |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Pixel-Art Office**           | Animated office view with agents walking, working, and attending meetings across 6 departments                                                                                                              |
+| **Workflow Pack Profiles**     | Six built-in workflow packs (`development`, `report`, `web_research_report`, `novel`, `video_preprod`, `roleplay`) provide pack-specific routing schema, QA rules, and output templates                     |
+| **Office Pack Profiles**       | Pack-scoped office profiles apply dedicated department topology, naming/theme presets, and isolated agent/department data per pack (except DB-backed development baseline)                                  |
+| **Kanban Task Board**          | Full task lifecycle — Inbox, Planned, Collaborating, In Progress, Review, Done — with drag-and-drop                                                                                                         |
+| **CEO Chat & Directives**      | Direct communication with team leaders; `$` directives support meeting choice plus project path/context routing (`project_path`, `project_context`)                                                         |
+| **Multi-Provider Support**     | Claude Code, Codex CLI, Gemini CLI, OpenCode, Kimi Code, Antigravity — all from one dashboard                                                                                                               |
+| **External API Providers**     | Connect agents to external LLM APIs (OpenAI, Anthropic, Google, Ollama, OpenRouter, Together, Groq, Cerebras, custom) via Settings > API tab, with official presets for OpenCode Go and Bailian Coding Plan |
+| **OAuth Integration**          | GitHub & Google OAuth with AES-encrypted token storage in local SQLite                                                                                                                                      |
+| **Real-time WebSocket**        | Live status updates, activity feed, and agent state synchronization                                                                                                                                         |
+| **Active Agent Control**       | Active-agent monitor with process/activity/idle metadata and direct kill action for stuck tasks                                                                                                             |
+| **Task Report System**         | Completion popup, report history, team report drilldown, and planning-lead consolidated archive                                                                                                             |
+| **Agent Management**           | Hire, edit, and delete agents with multilingual names, role/department/provider selection, and personality fields                                                                                           |
+| **Agent Ranking & XP**         | Agents earn XP for completed tasks; ranking board tracks top performers                                                                                                                                     |
+| **Skills Library**             | 600+ categorized skills (Frontend, Backend, Design, AI, DevOps, Security, etc.) with custom skill upload support                                                                                            |
+| **Meeting System**             | Planned and ad-hoc meetings with AI-generated minutes and multi-round review                                                                                                                                |
+| **Git Worktree Isolation**     | Each agent works in isolated git branches, merged only on CEO approval                                                                                                                                      |
+| **Multi-Language UI**          | English, Korean, Japanese, Chinese — auto-detected or manually set                                                                                                                                          |
+| **Messenger Integration**      | Telegram, Discord, Slack and more — send `$` CEO directives and receive updates through built-in direct channel sessions (OpenClaw optional)                                                                |
+| **PowerPoint Export**          | Generate presentation slides from meeting minutes and reports                                                                                                                                               |
+| **Connectivity QA Scripts**    | Built-in `test:comm:*` scripts for CLI/OAuth/API communication validation with retry and evidence logs                                                                                                      |
+| **In-App Update Notice**       | Checks GitHub latest release and shows a top banner with OS-specific `git pull` guidance when a newer version is available                                                                                  |
+| **Department Management**      | Planning, Development, Design, QA/QC, DevSecOps, Operations — with dedicated management tab for arrow/drag-and-drop sort order editing                                                                      |
+| **Manual Agent Assignment**    | Assign specific agents to projects; meetings/delegation respect manual selection, with pre-save safeguards for no-agent or leader-only selections                                                           |
+| **Sprite Registration Safety** | Prevents duplicate sprite-number file overwrite by rejecting conflicting uploads with explicit `409 sprite_number_exists` responses                                                                         |
+| **Custom Skill Upload**        | Upload `.md` skill files through the UI to train CLI representatives with custom skills, complete with classroom training animation and management interface                                                |
 
 ---
 
@@ -369,6 +370,58 @@ Notes:
 ---
 
 ## Quick Start
+
+## Docker Deployment (Quick Start)
+
+This repo now ships production-oriented Docker defaults:
+
+- Runs as **non-root** user (`app`, uid/gid `10001`)
+- Includes required CLI/runtime tools (`git`, `bash`, `openssh-client`)
+- Uses `docker-compose.yml` + `Dockerfile`
+- Persists runtime data in `./data` (already gitignored)
+
+### 1) Prepare environment files
+
+```bash
+cp .env.example .env.docker
+```
+
+Create `.env.docker.private` for sensitive runtime secrets (keep this file local only):
+
+```bash
+cat > .env.docker.private <<'EOF'
+# Claude Code via compatible endpoint
+ANTHROPIC_BASE_URL=https://api.minimaxi.com/anthropic
+ANTHROPIC_API_KEY=YOUR_ANTHROPIC_API_KEY
+EOF
+chmod 600 .env.docker.private
+```
+
+> `.env.docker*` is ignored by git (`.env.*`), so tokens are not committed by default.
+
+### 2) Start
+
+```bash
+docker compose up -d --build
+```
+
+### 3) Verify
+
+```bash
+docker ps --filter name=claw-empire
+docker logs -f claw-empire
+```
+
+Open: `http://127.0.0.1:8790`
+
+### Optional: publish image to GHCR
+
+```bash
+# requires token with package write scope
+echo "<GITHUB_TOKEN_WITH_PACKAGES_WRITE>" | docker login ghcr.io -u <github-user> --password-stdin
+docker tag claw-empire-claw-empire:latest ghcr.io/<github-user>/claw-empire:latest
+docker push ghcr.io/<github-user>/claw-empire:latest
+```
 
 ### Prerequisites
 
@@ -642,6 +695,8 @@ On every pull request, `.github/workflows/ci.yml` runs:
 5. `pnpm exec playwright install --with-deps`
 6. `pnpm run test:ci` (`test:web --coverage` + `test:api --coverage` + `test:e2e`)
 
+Note: `pnpm run test:e2e` now boots an isolated `.tmp/e2e-runtime` database and clears it again after the run. Set `PW_REUSE_EXISTING_SERVER=1` only when you intentionally want to reuse an already-running local server on `8810`.
+
 Recommended local pre-PR check:
 
 ```bash
@@ -722,6 +777,23 @@ Use only a plain executable + fixed args format (no shell/interpreter wrappers, 
 
 ## Provider Setup (CLI / OAuth / API)
 
+### Official API presets
+
+The **Settings > API** tab now includes four official direct-API presets:
+
+- `OpenCode Go (OpenAI)` -> `https://opencode.ai/zen/go/v1`
+- `OpenCode Go (Anthropic)` -> `https://opencode.ai/zen/go/v1`
+- `Bailian Coding Plan (OpenAI)` -> `https://coding-intl.dashscope.aliyuncs.com/v1`
+- `Bailian Coding Plan (Anthropic)` -> `https://coding-intl.dashscope.aliyuncs.com/apps/anthropic`
+
+Notes:
+
+- Bailian Coding Plan API keys must start with `sk-sp-`.
+- These presets seed fallback model lists immediately so agents can be assigned even when live `/models` discovery is unavailable or incomplete.
+- The assignment modal uses `development` as the default baseline and also includes office packs that have already completed initial setup and been hydrated into runtime state.
+- Direct API presets use the provider endpoint model IDs such as `glm-5`, `kimi-k2.5`, and `minimax-m2.5`. They do **not** use OpenCode CLI model IDs like `opencode-go/<model-id>`.
+- Bailian Coding Plan keys are intended for the interactive coding tool flow. Review the provider documentation before reusing those keys in other environments.
+
 Claw-Empire supports three provider paths:
 
 - **CLI tools** — install local coding CLIs and run tasks through local processes
@@ -730,12 +802,13 @@ Claw-Empire supports three provider paths:
 
 For CLI mode, install at least one:
 
-| Provider                                                      | Install                              | Auth                           |
-| ------------------------------------------------------------- | ------------------------------------ | ------------------------------ |
-| [Claude Code](https://docs.anthropic.com/en/docs/claude-code) | `npm i -g @anthropic-ai/claude-code` | `claude` (follow prompts)      |
-| [Codex CLI](https://github.com/openai/codex)                  | `npm i -g @openai/codex`             | Set `OPENAI_API_KEY` in `.env` |
-| [Gemini CLI](https://github.com/google-gemini/gemini-cli)     | `npm i -g @google/gemini-cli`        | OAuth via Settings panel       |
-| [OpenCode](https://github.com/opencode-ai/opencode)           | `npm i -g opencode`                  | Provider-specific              |
+| Provider                                                      | Install                                  | Auth                           |
+| ------------------------------------------------------------- | ---------------------------------------- | ------------------------------ |
+| [Claude Code](https://docs.anthropic.com/en/docs/claude-code) | `npm i -g @anthropic-ai/claude-code`     | `claude` (follow prompts)      |
+| [Codex CLI](https://github.com/openai/codex)                  | `npm i -g @openai/codex`                 | Set `OPENAI_API_KEY` in `.env` |
+| [Gemini CLI](https://github.com/google-gemini/gemini-cli)     | `npm i -g @google/gemini-cli`            | OAuth via Settings panel       |
+| [OpenCode](https://github.com/opencode-ai/opencode)           | `npm i -g opencode`                      | Provider-specific              |
+| [Kimi Code](https://github.com/MoonshotAI/kimi-cli)           | `uv tool install --python 3.13 kimi-cli` | `kimi auth login`              |
 
 Configure providers and models in the **Settings > CLI Tools** panel within the app.
 

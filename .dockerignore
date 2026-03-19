@@ -1,58 +1,21 @@
-# Dependencies
-node_modules
-npm-debug.log
-yarn-error.log
-pnpm-debug.log
+# Keep local secrets and env files out of Docker build context
+.env*
 
-# Build outputs
-dist
-build
-*.log
-
-# Environment files
-.env
-.env.local
-.env.*.local
-
-# Git
+# Local/runtime artifacts
 .git
 .gitignore
-
-# IDE
-.vscode
-.idea
-*.swp
-*.swo
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Testing
+node_modules
+data
+logs
 coverage
-.nyc_output
-test-results
 playwright-report
 
-# Temporary files
+# Build/test caches
+dist
 .tmp
-*.tmp
+*.tsbuildinfo
 
-# Documentation
-docs
-slides
-*.md
-
-# CI/CD
-.github
-.gitlab-ci.yml
-
-# Worktrees
-.climpire-worktrees
-
-# Sample data
-Sample_Img
-
-# Logs
-logs
-*.log
+# OS/editor noise
+.DS_Store
+.vscode
+.idea
