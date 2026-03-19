@@ -138,6 +138,14 @@ export function applyTaskSchemaMigrations(db: DbLike): void {
   migrateLegacyTasksStatusSchema(db);
   repairLegacyTaskForeignKeys(db);
   ensureMessagesIdempotencySchema(db);
+
+  // Indexes on migration-added columns (safe: IF NOT EXISTS)
+  try {
+    db.exec("CREATE INDEX IF NOT EXISTS idx_tasks_source_task ON tasks(source_task_id)");
+  } catch { /* column may not exist in minimal test schemas */ }
+  try {
+    db.exec("CREATE INDEX IF NOT EXISTS idx_subtasks_delegated ON subtasks(task_id, delegated_task_id)");
+  } catch { /* column may not exist in minimal test schemas */ }
 }
 
 function safeJsonParse(raw: string): unknown {

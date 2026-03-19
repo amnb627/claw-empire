@@ -362,6 +362,11 @@ CREATE INDEX IF NOT EXISTS idx_skill_learning_history_provider_status_updated
 CREATE INDEX IF NOT EXISTS idx_skill_learning_history_skill_lookup
   ON skill_learning_history(provider, repo, skill_id, updated_at DESC);
 
+CREATE INDEX IF NOT EXISTS idx_tasks_project ON tasks(project_id);
+CREATE INDEX IF NOT EXISTS idx_tasks_workflow_pack ON tasks(workflow_pack_key);
+CREATE INDEX IF NOT EXISTS idx_subtasks_task_status ON subtasks(task_id, status);
+CREATE INDEX IF NOT EXISTS idx_agents_status ON agents(status, department_id);
+
 CREATE TABLE IF NOT EXISTS api_providers (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,

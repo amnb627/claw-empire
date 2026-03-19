@@ -7,6 +7,7 @@ import type { RuntimeContext } from "../../../../types/runtime-context.ts";
 import type { MeetingMinuteEntryRow, MeetingMinutesRow } from "../../shared/types.ts";
 import { isWorkflowPackKey } from "../../../workflow/packs/definitions.ts";
 import { resolveWorkflowPackKeyForTask } from "../../../workflow/packs/task-pack-resolver.ts";
+import { validateTaskCreateBody } from "./validation.ts";
 
 export type TaskCrudRouteDeps = Pick<
   RuntimeContext,
@@ -190,18 +191,19 @@ export function registerTaskCrudRoutes(deps: TaskCrudRouteDeps): void {
   });
 
   app.post("/api/tasks", (req, res) => {
-    const body = req.body ?? {};
+    const validated = validateTaskCreateBody(req.body, normalizeTextField);
+    if (!validated.ok) {
+      return res.status(400).json({ error: validated.error });
+    }
+    const body = validated.data;
     const id = randomUUID();
     const t = nowMs();
 
-    const title = (body as any).title;
-    if (!title || typeof title !== "string") {
-      return res.status(400).json({ error: "title_required" });
-    }
+    const title = body.title;
 
-    const requestedProjectId = normalizeTextField((body as any).project_id);
+    const requestedProjectId = body.project_id;
     let resolvedProjectId: string | null = null;
-    let resolvedProjectPath = normalizeProjectPathInput((body as any).project_path);
+    let resolvedProjectPath = normalizeProjectPathInput(body.project_path);
     if (requestedProjectId) {
       const project = db.prepare("SELECT id, project_path FROM projects WHERE id = ?").get(requestedProjectId) as
         | {
@@ -236,42 +238,38 @@ export function registerTaskCrudRoutes(deps: TaskCrudRouteDeps): void {
     ).run(
       id,
       title,
-      (body as any).description ?? null,
-      (body as any).department_id ?? null,
-      (body as any).assigned_agent_id ?? null,
+      body.description,
+      body.department_id,
+      body.assigned_agent_id,
       resolvedProjectId,
-      (body as any).status ?? "inbox",
-      (body as any).priority ?? 0,
-      (body as any).task_type ?? "general",
+      body.status,
+      body.priority,
+      body.task_type,
       resolveWorkflowPackKeyForTask({
         db: db as any,
-        explicitPackKey: (body as any).workflow_pack_key,
+        explicitPackKey: body.workflow_pack_key,
         projectId: resolvedProjectId,
       }),
-      typeof (body as any).workflow_meta_json === "string"
-        ? (body as any).workflow_meta_json
-        : (body as any).workflow_meta_json
-          ? JSON.stringify((body as any).workflow_meta_json)
-          : null,
-      typeof (body as any).output_format === "string" ? (body as any).output_format : null,
+      body.workflow_meta_json,
+      body.output_format,
       resolvedProjectPath,
-      (body as any).base_branch ?? null,
+      body.base_branch,
       t,
       t,
     );
     recordTaskCreationAudit({
       taskId: id,
       taskTitle: title,
-      taskStatus: String((body as any).status ?? "inbox"),
-      departmentId: typeof (body as any).department_id === "string" ? (body as any).department_id : null,
-      assignedAgentId: typeof (body as any).assigned_agent_id === "string" ? (body as any).assigned_agent_id : null,
-      taskType: typeof (body as any).task_type === "string" ? (body as any).task_type : "general",
+      taskStatus: body.status,
+      departmentId: body.department_id,
+      assignedAgentId: body.assigned_agent_id,
+      taskType: body.task_type,
       projectPath: resolvedProjectPath,
       trigger: "api.tasks.create",
       triggerDetail: "POST /api/tasks",
       actorType: "api_client",
       req,
-      body: typeof body === "object" && body ? (body as Record<string, unknown>) : null,
+      body: body as unknown as Record<string, unknown>,
     });
 
     if (resolvedProjectId) {
