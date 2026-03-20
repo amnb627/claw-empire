@@ -8,6 +8,8 @@ import { submitTaskWithProjectHandling } from "./create-modal/submit-task";
 import { useDraftState } from "./create-modal/useDraftState";
 import { usePathHelperMessages } from "./create-modal/usePathHelperMessages";
 import { useProjectPickerState } from "./create-modal/useProjectPickerState";
+import { usePackSchema } from "./create-modal/usePackSchema";
+import { assemblePackPrompt, hasSchemaFields } from "../../utils/packPrompt";
 
 interface CreateModalProps {
   agents: Agent[];
@@ -36,9 +38,21 @@ function CreateModal({ agents, departments, onClose, onCreate, onAssign }: Creat
   const [taskType, setTaskType] = useState<TaskType>("general");
   const [priority, setPriority] = useState(3);
   const [assignAgentId, setAssignAgentId] = useState("");
+  const [workflowPackKey, setWorkflowPackKey] = useState<WorkflowPackKey | "">("");
+  const [packFieldValues, setPackFieldValues] = useState<Record<string, string>>({});
+  const [packNotes, setPackNotes] = useState("");
+  const [packPreviewExpanded, setPackPreviewExpanded] = useState(false);
+  const [outputPath, setOutputPath] = useState("");
   const [submitBusy, setSubmitBusy] = useState(false);
   const [submitWithoutProjectPromptOpen, setSubmitWithoutProjectPromptOpen] = useState(false);
   const [formFeedback, setFormFeedback] = useState<FormFeedback | null>(null);
+
+  const { schema: packSchema, packName, loading: packSchemaLoading } = usePackSchema(workflowPackKey);
+  const isPackMode = hasSchemaFields(packSchema) && !packSchemaLoading;
+
+  const assembledDescription = isPackMode
+    ? assemblePackPrompt(packName, packSchema!, packFieldValues, packNotes)
+    : description;
 
   const filteredAgents = useMemo(
     () => (departmentId ? agents.filter((agent) => agent.department_id === departmentId) : agents),
@@ -110,7 +124,7 @@ function CreateModal({ agents, departments, onClose, onCreate, onAssign }: Creat
     await submitTaskWithProjectHandling(
       {
         title,
-        description,
+        description: assembledDescription,
         departmentId,
         taskType,
         priority,
@@ -255,6 +269,10 @@ function CreateModal({ agents, departments, onClose, onCreate, onAssign }: Creat
     onClearDrafts: clearDrafts,
   };
 
+  // Auto-fill output path when project changes
+  const selectedProjectPath = projectPicker.selectedProject?.project_path ?? projectPicker.newProjectPath ?? "";
+  const defaultOutputPath = selectedProjectPath ? `${selectedProjectPath}/claw_output/` : "";
+
   return (
     <CreateTaskModalView
       t={t}
@@ -273,6 +291,17 @@ function CreateModal({ agents, departments, onClose, onCreate, onAssign }: Creat
       filteredAgents={filteredAgents}
       projectSectionProps={projectSectionProps}
       overlaysProps={overlaysProps}
+      workflowPackKey={workflowPackKey}
+      packSchema={packSchema}
+      packName={packName}
+      packSchemaLoading={packSchemaLoading}
+      isPackMode={isPackMode}
+      packFieldValues={packFieldValues}
+      packNotes={packNotes}
+      packPreviewExpanded={packPreviewExpanded}
+      assembledPrompt={assembledDescription}
+      outputPath={outputPath}
+      defaultOutputPath={defaultOutputPath}
       onOpenDraftModal={() => {
         setRestorePromptOpen(false);
         setDraftModalOpen(true);
@@ -298,6 +327,20 @@ function CreateModal({ agents, departments, onClose, onCreate, onAssign }: Creat
       }}
       onPriorityChange={handlePriorityChange}
       onAssignAgentChange={handleAssignAgentChange}
+      onWorkflowPackKeyChange={(key) => {
+        setWorkflowPackKey(key as WorkflowPackKey | "");
+        setPackFieldValues({});
+        setPackNotes("");
+        setPackPreviewExpanded(false);
+        setFormFeedback(null);
+      }}
+      onPackFieldChange={(fieldKey, value) => {
+        setPackFieldValues((prev) => ({ ...prev, [fieldKey]: value }));
+      }}
+      onPackNotesChange={setPackNotes}
+      onTogglePackPreview={() => setPackPreviewExpanded((prev) => !prev)}
+      onOutputPathChange={setOutputPath}
+      onAutoFillOutputPath={() => setOutputPath(defaultOutputPath)}
     />
   );
 }

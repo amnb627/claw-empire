@@ -1,9 +1,12 @@
 import type { ComponentProps, FormEventHandler } from "react";
-import type { Agent, Department, TaskType } from "../../../types";
+import { WORKFLOW_PACK_KEYS } from "../../../types";
+import type { Agent, Department, TaskType, WorkflowPackKey } from "../../../types";
 import { TASK_TYPE_OPTIONS, taskTypeLabel, type FormFeedback, type TFunction } from "../constants";
 import CreateTaskModalOverlays from "./Overlays";
 import type { CreateTaskModalOverlaysProps } from "./overlay-types";
 import { AssigneeSection, PrioritySection, ProjectSection } from "./Sections";
+import PackSchemaFields from "./PackSchemaFields";
+import type { PackInputSchema } from "../../../utils/packPrompt";
 
 interface CreateTaskModalViewProps {
   t: TFunction;
@@ -22,6 +25,19 @@ interface CreateTaskModalViewProps {
   filteredAgents: Agent[];
   projectSectionProps: ComponentProps<typeof ProjectSection>;
   overlaysProps: CreateTaskModalOverlaysProps;
+  // Pack-driven form props
+  workflowPackKey: WorkflowPackKey | "";
+  packSchema: PackInputSchema | null;
+  packName: string;
+  packSchemaLoading: boolean;
+  isPackMode: boolean;
+  packFieldValues: Record<string, string>;
+  packNotes: string;
+  packPreviewExpanded: boolean;
+  assembledPrompt: string;
+  // Output path props
+  outputPath: string;
+  defaultOutputPath: string;
   onOpenDraftModal: () => void;
   onRequestClose: () => void;
   onSubmit: FormEventHandler<HTMLFormElement>;
@@ -31,6 +47,12 @@ interface CreateTaskModalViewProps {
   onTaskTypeChange: (value: TaskType) => void;
   onPriorityChange: (value: number) => void;
   onAssignAgentChange: (value: string) => void;
+  onWorkflowPackKeyChange: (key: string) => void;
+  onPackFieldChange: (fieldKey: string, value: string) => void;
+  onPackNotesChange: (value: string) => void;
+  onTogglePackPreview: () => void;
+  onOutputPathChange: (value: string) => void;
+  onAutoFillOutputPath: () => void;
 }
 
 export default function CreateTaskModalView({
@@ -50,6 +72,17 @@ export default function CreateTaskModalView({
   filteredAgents,
   projectSectionProps,
   overlaysProps,
+  workflowPackKey,
+  packSchema,
+  packName,
+  packSchemaLoading,
+  isPackMode,
+  packFieldValues,
+  packNotes,
+  packPreviewExpanded,
+  assembledPrompt,
+  outputPath,
+  defaultOutputPath,
   onOpenDraftModal,
   onRequestClose,
   onSubmit,
@@ -59,6 +92,12 @@ export default function CreateTaskModalView({
   onTaskTypeChange,
   onPriorityChange,
   onAssignAgentChange,
+  onWorkflowPackKeyChange,
+  onPackFieldChange,
+  onPackNotesChange,
+  onTogglePackPreview,
+  onOutputPathChange,
+  onAutoFillOutputPath,
 }: CreateTaskModalViewProps) {
   return (
     <div
@@ -126,23 +165,74 @@ export default function CreateTaskModalView({
                 />
               </div>
 
+              {/* Workflow pack selector */}
               <div>
                 <label className="mb-1 block text-sm font-medium text-slate-300">
-                  {t({ ko: "설명", en: "Description", ja: "説明", zh: "说明" })}
+                  {t({ ko: "워크플로우 팩", en: "Workflow Pack", ja: "ワークフローパック", zh: "工作流包" })}
                 </label>
-                <textarea
-                  value={description}
-                  onChange={(event) => onDescriptionChange(event.target.value)}
-                  placeholder={t({
-                    ko: "업무에 대한 상세 설명을 입력하세요",
-                    en: "Enter a detailed description",
-                    ja: "タスクの詳細説明を入力してください",
-                    zh: "请输入任务详细说明",
-                  })}
-                  rows={3}
-                  className="w-full resize-none rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white placeholder-slate-500 outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                />
+                <select
+                  value={workflowPackKey}
+                  onChange={(event) => onWorkflowPackKeyChange(event.target.value)}
+                  data-testid="workflow-pack-select"
+                  className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                >
+                  <option value="">
+                    {t({ ko: "-- 팩 선택 --", en: "-- Select pack --", ja: "-- パック選択 --", zh: "-- 选择包 --" })}
+                  </option>
+                  {WORKFLOW_PACK_KEYS.map((key) => (
+                    <option key={key} value={key}>
+                      {key}
+                    </option>
+                  ))}
+                </select>
+                {packSchemaLoading && (
+                  <p className="mt-1 text-xs text-slate-500">
+                    {t({ ko: "스키마 불러오는 중...", en: "Loading schema...", ja: "スキーマ読込中...", zh: "加载中..." })}
+                  </p>
+                )}
               </div>
+
+              {/* Pack-driven fields when schema is available */}
+              {isPackMode && packSchema ? (
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-slate-300">
+                    {t({ ko: "업무 상세", en: "Task Details", ja: "タスク詳細", zh: "任务详情" })}
+                  </label>
+                  <div className="rounded-lg border border-slate-700/60 bg-slate-800/40 px-3 py-3">
+                    <PackSchemaFields
+                      schema={packSchema}
+                      packName={packName}
+                      fieldValues={packFieldValues}
+                      notes={packNotes}
+                      previewExpanded={packPreviewExpanded}
+                      assembledPrompt={assembledPrompt}
+                      t={t}
+                      onFieldChange={onPackFieldChange}
+                      onNotesChange={onPackNotesChange}
+                      onTogglePreview={onTogglePackPreview}
+                    />
+                  </div>
+                </div>
+              ) : (
+                /* Free-text description fallback */
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-slate-300">
+                    {t({ ko: "설명", en: "Description", ja: "説明", zh: "说明" })}
+                  </label>
+                  <textarea
+                    value={description}
+                    onChange={(event) => onDescriptionChange(event.target.value)}
+                    placeholder={t({
+                      ko: "업무에 대한 상세 설명을 입력하세요",
+                      en: "Enter a detailed description",
+                      ja: "タスクの詳細説明を入力してください",
+                      zh: "请输入任务详细说明",
+                    })}
+                    rows={3}
+                    className="w-full resize-none rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white placeholder-slate-500 outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+              )}
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -184,6 +274,47 @@ export default function CreateTaskModalView({
               </div>
 
               <ProjectSection {...projectSectionProps} />
+
+              {/* Output Path field */}
+              <div>
+                <label className="mb-1 block text-sm font-medium text-slate-300">
+                  {t({ ko: "출력 경로", en: "Output Path", ja: "出力パス", zh: "输出路径" })}
+                  <span className="ml-1 text-xs font-normal text-slate-500">
+                    {t({ ko: "(선택)", en: "(optional)", ja: "(任意)", zh: "(可选)" })}
+                  </span>
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={outputPath}
+                    onChange={(event) => onOutputPathChange(event.target.value)}
+                    placeholder={defaultOutputPath || t({
+                      ko: "예: /path/to/claw_output/",
+                      en: "e.g. /path/to/claw_output/",
+                      ja: "例: /path/to/claw_output/",
+                      zh: "例如: /path/to/claw_output/",
+                    })}
+                    data-testid="output-path-input"
+                    className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white placeholder-slate-500 outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  />
+                  {defaultOutputPath && (
+                    <button
+                      type="button"
+                      onClick={onAutoFillOutputPath}
+                      data-testid="output-path-autofill"
+                      className="shrink-0 rounded-lg border border-slate-600 px-2.5 py-2 text-xs text-slate-300 transition hover:bg-slate-800 hover:text-white"
+                      title={t({
+                        ko: "자동 채우기",
+                        en: "Auto-fill",
+                        ja: "自動入力",
+                        zh: "自动填充",
+                      })}
+                    >
+                      {t({ ko: "자동", en: "Auto", ja: "自動", zh: "自动" })}
+                    </button>
+                  )}
+                </div>
+              </div>
 
               <div className={createNewProjectMode ? "lg:hidden" : ""}>
                 <PrioritySection priority={priority} t={t} onPriorityChange={onPriorityChange} />
