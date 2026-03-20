@@ -367,6 +367,15 @@ CREATE INDEX IF NOT EXISTS idx_tasks_workflow_pack ON tasks(workflow_pack_key);
 CREATE INDEX IF NOT EXISTS idx_subtasks_task_status ON subtasks(task_id, status);
 CREATE INDEX IF NOT EXISTS idx_agents_status ON agents(status, department_id);
 
+CREATE TABLE IF NOT EXISTS active_cli_processes (
+  task_id TEXT PRIMARY KEY REFERENCES tasks(id) ON DELETE CASCADE,
+  pid INTEGER NOT NULL,
+  provider TEXT NOT NULL,
+  worktree_path TEXT,
+  spawned_at INTEGER NOT NULL DEFAULT (unixepoch()*1000)
+);
+CREATE INDEX IF NOT EXISTS idx_active_cli_processes_pid ON active_cli_processes(pid);
+
 CREATE TABLE IF NOT EXISTS api_providers (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,

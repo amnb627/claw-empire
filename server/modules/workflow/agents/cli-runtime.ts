@@ -315,6 +315,11 @@ export function createCliRuntimeTools(deps: CliRuntimeDeps) {
 
     activeProcesses.set(taskId, child);
 
+    try {
+      db.prepare(`INSERT OR REPLACE INTO active_cli_processes (task_id, pid, provider, worktree_path) VALUES (?, ?, ?, ?)`)
+        .run(taskId, child.pid ?? 0, provider, projectPath ?? null);
+    } catch { /* non-fatal */ }
+
     child.on("error", (err) => {
       finished = true;
       clearRunTimers();
@@ -361,6 +366,9 @@ export function createCliRuntimeTools(deps: CliRuntimeDeps) {
       } catch {
         /* ignore */
       }
+      try {
+        db.prepare('DELETE FROM active_cli_processes WHERE task_id = ?').run(taskId);
+      } catch { /* non-fatal */ }
     });
 
     if (process.platform !== "win32") child.unref();

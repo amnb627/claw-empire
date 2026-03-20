@@ -40,6 +40,8 @@ import { applyBaseSchema } from "./modules/bootstrap/schema/base-schema.ts";
 import { initializeOAuthRuntime } from "./modules/bootstrap/schema/oauth-runtime.ts";
 import { applyTaskSchemaMigrations } from "./modules/bootstrap/schema/task-schema-migrations.ts";
 import { applyDefaultSeeds } from "./modules/bootstrap/schema/seeds.ts";
+import { reconcileOrphanedProcesses } from "./modules/workflow/agents/process-recovery.ts";
+import { initPackRegistry } from "./modules/workflow/packs/definitions.ts";
 
 export type { TaskCreationAuditInput } from "./modules/bootstrap/security-audit.ts";
 
@@ -57,6 +59,10 @@ applyBaseSchema(db);
 const oauthRuntime = initializeOAuthRuntime({ db, nowMs, runInTransaction });
 applyTaskSchemaMigrations(db);
 applyDefaultSeeds(db);
+
+// Populate the runtime pack registry from DB so user-defined packs are recognized
+const _enabledPackRows = db.prepare("SELECT key FROM workflow_packs WHERE enabled = 1").all() as { key: string }[];
+initPackRegistry(_enabledPackRows.map((p) => p.key));
 
 const messageIdempotency = createMessageIdempotencyTools({
   db,
@@ -125,5 +131,9 @@ Object.assign(runtimeContext, initializeWorkflow(runtimeProxy as RuntimeContext)
 Object.assign(runtimeContext, registerApiRoutes(runtimeContext as RuntimeContext));
 
 assertRuntimeFunctionsResolved(runtimeContext, ROUTE_RUNTIME_HELPER_KEYS, "route helper wiring");
+
+reconcileOrphanedProcesses(db).catch((err) => {
+  console.error('[ProcessRecovery] Error during orphan reconciliation:', err);
+});
 
 startLifecycle(runtimeContext as RuntimeContext);
