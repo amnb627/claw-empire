@@ -75,6 +75,14 @@ export type DiscordDiscoverableChannel = {
   type: number;
 };
 
+function safeJsonParse<T>(text: string): { ok: true; data: T } | { ok: false; error: string } {
+  try {
+    return { ok: true, data: JSON.parse(text) as T };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : String(e) };
+  }
+}
+
 function normalizeText(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
 }
@@ -105,7 +113,11 @@ async function fetchDiscordJson(token: string, apiPath: string): Promise<unknown
   if (!bodyText.trim()) {
     return null;
   }
-  return JSON.parse(bodyText) as unknown;
+  const parseResult = safeJsonParse<unknown>(bodyText);
+  if (!parseResult.ok) {
+    throw new Error(`discord api response parse failed: ${parseResult.error}`);
+  }
+  return parseResult.data;
 }
 
 function normalizeSession(
@@ -154,7 +166,12 @@ function readPersistedMessengerChannels(): PersistedMessengerChannels | null {
     if (!raw) {
       return null;
     }
-    const parsed = JSON.parse(raw) as unknown;
+    const parseResult = safeJsonParse<unknown>(raw);
+    if (!parseResult.ok) {
+      console.warn(`[Claw-Empire] failed to parse messenger channels JSON: ${parseResult.error}`);
+      return null;
+    }
+    const parsed = parseResult.data;
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
       return null;
     }
@@ -534,9 +551,11 @@ async function signalRpcRequest(params: {
   if (!responseText.trim()) {
     return;
   }
-  const payload = JSON.parse(responseText) as {
-    error?: { code?: number; message?: string };
-  };
+  const parseResult = safeJsonParse<{ error?: { code?: number; message?: string } }>(responseText);
+  if (!parseResult.ok) {
+    throw new Error(`signal rpc response parse failed: ${parseResult.error}`);
+  }
+  const payload = parseResult.data;
   if (payload?.error) {
     throw new Error(`signal rpc ${payload.error.code ?? "unknown"}: ${payload.error.message ?? "unknown error"}`);
   }
