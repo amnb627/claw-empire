@@ -350,12 +350,44 @@ export function registerUpdateAutoRoutes(ctx: RuntimeContext): void {
     await autoUpdateInFlight;
   }
 
-  const buildHealthPayload = () => ({
-    ok: true,
-    version: PKG_VERSION,
-    app: "Claw-Empire",
-    dbPath,
-  });
+  const SERVER_START_MS = Date.now();
+
+  const buildHealthPayload = () => {
+    // Database health: count user tables
+    let dbOk = false;
+    let tableCount = 0;
+    let activeProcessCount = 0;
+    try {
+      const rows = db
+        .prepare(`SELECT count(*) AS cnt FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'`)
+        .get() as { cnt: number } | undefined;
+      tableCount = rows?.cnt ?? 0;
+      dbOk = true;
+    } catch {
+      /* db not reachable */
+    }
+    try {
+      const rows = db
+        .prepare(`SELECT count(*) AS cnt FROM active_cli_processes`)
+        .get() as { cnt: number } | undefined;
+      activeProcessCount = rows?.cnt ?? 0;
+    } catch {
+      /* table may not exist yet */
+    }
+
+    return {
+      status: dbOk ? "ok" : "degraded",
+      timestamp: new Date().toISOString(),
+      version: PKG_VERSION,
+      app: "Claw-Empire",
+      uptime_seconds: Math.floor((Date.now() - SERVER_START_MS) / 1000),
+      database: {
+        ok: dbOk,
+        tables: tableCount,
+        active_processes: activeProcessCount,
+      },
+    };
+  };
 
   {
     const dep = validateAutoUpdateDependencies();

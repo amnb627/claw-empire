@@ -17569,6 +17569,9 @@
                   },
                   "required": ["error"],
                   "additionalProperties": true
+                },
+                "example": {
+                  "error": "string"
                 }
               }
             }
@@ -18027,6 +18030,9 @@
                   },
                   "required": ["error"],
                   "additionalProperties": true
+                },
+                "example": {
+                  "error": "string"
                 }
               }
             }
@@ -18560,6 +18566,9 @@
                   },
                   "required": ["error"],
                   "additionalProperties": true
+                },
+                "example": {
+                  "error": "string"
                 }
               }
             }
@@ -18964,6 +18973,9 @@
                   },
                   "required": ["error"],
                   "additionalProperties": true
+                },
+                "example": {
+                  "error": "string"
                 }
               }
             }
@@ -19260,6 +19272,9 @@
                   },
                   "required": ["error"],
                   "additionalProperties": true
+                },
+                "example": {
+                  "error": "string"
                 }
               }
             }
@@ -19328,6 +19343,9 @@
                   },
                   "required": ["error"],
                   "additionalProperties": true
+                },
+                "example": {
+                  "error": "string"
                 }
               }
             }
@@ -19504,6 +19522,9 @@
                   },
                   "required": ["error"],
                   "additionalProperties": true
+                },
+                "example": {
+                  "error": "string"
                 }
               }
             }
@@ -19735,6 +19756,9 @@
                   },
                   "required": ["error"],
                   "additionalProperties": true
+                },
+                "example": {
+                  "error": "string"
                 }
               }
             }
@@ -19958,6 +19982,9 @@
                   },
                   "required": ["error"],
                   "additionalProperties": true
+                },
+                "example": {
+                  "error": "string"
                 }
               }
             }
@@ -20120,6 +20147,9 @@
                   },
                   "required": ["error"],
                   "additionalProperties": true
+                },
+                "example": {
+                  "error": "string"
                 }
               }
             }
@@ -20328,6 +20358,9 @@
                   },
                   "required": ["error"],
                   "additionalProperties": true
+                },
+                "example": {
+                  "error": "string"
                 }
               }
             }
@@ -20501,6 +20534,9 @@
                   },
                   "required": ["error"],
                   "additionalProperties": true
+                },
+                "example": {
+                  "error": "string"
                 }
               }
             }
