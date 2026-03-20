@@ -7,6 +7,8 @@ import {
 } from "../packs/video-artifact.ts";
 import { evaluateRemotionOnlyGateFromLogFiles } from "../packs/video-render-engine-gate.ts";
 import { calculateXp, countAgentStreak, countSubtasks } from "./xp-calculator.ts";
+import { runPeerReview } from "./peer-review.ts";
+import { extractAndStoreInsights } from "../agents/skill-extractor.ts";
 import type { ChildProcess } from "node:child_process";
 import type { DatabaseSync } from "node:sqlite";
 
@@ -351,6 +353,45 @@ ${completedResult.result.slice(0, 2000)}`
       db.prepare("UPDATE tasks SET result = ? WHERE id = ?").run(result, taskId);
     }
 
+    // Extract project-specific insights from this task (non-blocking, non-fatal)
+    if (finalExitCode === 0 && task?.project_id) {
+      try {
+        const completedTask = db
+          .prepare("SELECT project_id, workflow_pack_key, title, description, result FROM tasks WHERE id = ?")
+          .get(taskId) as
+          | {
+              project_id: string | null;
+              workflow_pack_key: string;
+              title: string;
+              description: string | null;
+              result: string | null;
+            }
+          | undefined;
+
+        if (completedTask?.project_id) {
+          const providerRow = db
+            .prepare("SELECT provider FROM active_cli_processes WHERE task_id = ?")
+            .get(taskId) as { provider: string } | undefined;
+          const provider = providerRow?.provider ?? (activeProcesses.get(taskId) as any)?.spawnargs?.[0] ?? "claude";
+          const stored = extractAndStoreInsights({
+            taskId,
+            projectId: completedTask.project_id,
+            provider,
+            title: completedTask.title,
+            description: completedTask.description,
+            result: completedTask.result,
+            packKey: completedTask.workflow_pack_key,
+            db,
+          });
+          if (stored > 0) {
+            console.log(`[Memory] Stored ${stored} insight(s) for project ${completedTask.project_id}`);
+          }
+        }
+      } catch (e) {
+        console.warn("[Memory] Insight extraction failed (non-critical):", e);
+      }
+    }
+
     // Auto-complete own-department subtasks on CLI success; foreign ones get delegated
     if (finalExitCode === 0) {
       const pendingSubtasks = db
@@ -597,6 +638,41 @@ ${completedResult.result.slice(0, 2000)}`
     }
 
     if (finalExitCode === 0) {
+      // ── PEER REVIEW: run QA check for packs with failOnMissingSections ──
+      if (task?.workflow_pack_key) {
+        try {
+          const packRow = db
+            .prepare("SELECT qa_rules_json FROM workflow_packs WHERE key = ?")
+            .get(task.workflow_pack_key) as { qa_rules_json?: string } | undefined;
+          const packQaRules = packRow?.qa_rules_json
+            ? (JSON.parse(packRow.qa_rules_json) as { failOnMissingSections?: boolean; requiredSections?: string[] })
+            : null;
+          const shouldPeerReview =
+            packQaRules?.failOnMissingSections === true &&
+            (packQaRules?.requiredSections ?? []).length > 0;
+
+          if (shouldPeerReview) {
+            const reviewResult = runPeerReview({
+              taskId,
+              primaryAgentId: task.assigned_agent_id ?? "",
+              primaryResult: result ?? "",
+              packKey: task.workflow_pack_key,
+              db,
+              broadcast,
+            });
+            appendTaskLog(
+              taskId,
+              "system",
+              `Peer review: ${reviewResult.passed ? "PASSED" : "FAILED"} (score=${reviewResult.score}, missing=${reviewResult.missingRequirements.join(",") || "none"})`,
+            );
+          }
+        } catch (peerReviewErr: unknown) {
+          // Peer review is non-blocking — log and continue
+          const msg = peerReviewErr instanceof Error ? peerReviewErr.message : String(peerReviewErr);
+          appendTaskLog(taskId, "system", `Peer review skipped (error: ${msg})`);
+        }
+      }
+
       // ── SUCCESS: Move to 'review' for team leader check ──
       db.prepare("UPDATE tasks SET status = 'review', updated_at = ? WHERE id = ?").run(t, taskId);
 

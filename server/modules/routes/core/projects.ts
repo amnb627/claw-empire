@@ -420,6 +420,34 @@ export function registerProjectRoutes({
     res.json({ ok: true });
   });
 
+  // ── Agent Project Memory endpoints ──────────────────────────────────────
+
+  app.get("/api/projects/:id/memory", (req, res) => {
+    const id = String(req.params.id);
+    const project = db.prepare("SELECT id FROM projects WHERE id = ?").get(id);
+    if (!project) return res.status(404).json({ error: "not_found" });
+
+    const memories = db
+      .prepare(
+        `
+      SELECT id, insight, category, confidence, use_count, created_at, source_task_id
+      FROM agent_project_memory
+      WHERE project_id = ?
+      ORDER BY confidence DESC, use_count DESC, created_at DESC
+      LIMIT 50
+    `,
+      )
+      .all(id);
+    res.json({ memories });
+  });
+
+  app.delete("/api/projects/:id/memory/:memoryId", (req, res) => {
+    const id = String(req.params.id);
+    const memoryId = String(req.params.memoryId);
+    db.prepare("DELETE FROM agent_project_memory WHERE id = ? AND project_id = ?").run(memoryId, id);
+    res.json({ ok: true });
+  });
+
   app.get("/api/projects/:id", (req, res) => {
     const id = String(req.params.id);
     const project = db.prepare("SELECT * FROM projects WHERE id = ?").get(id);

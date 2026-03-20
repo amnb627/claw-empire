@@ -166,7 +166,7 @@ CREATE TABLE IF NOT EXISTS task_interrupt_injections (
 CREATE TABLE IF NOT EXISTS meeting_minutes (
   id TEXT PRIMARY KEY,
   task_id TEXT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
-  meeting_type TEXT NOT NULL CHECK(meeting_type IN ('planned','review')),
+  meeting_type TEXT NOT NULL CHECK(meeting_type IN ('planned','review','peer_review')),
   round INTEGER NOT NULL,
   title TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'in_progress' CHECK(status IN ('in_progress','completed','revision_requested','failed')),
@@ -391,5 +391,43 @@ CREATE TABLE IF NOT EXISTS api_providers (
   created_at INTEGER DEFAULT (unixepoch()*1000),
   updated_at INTEGER DEFAULT (unixepoch()*1000)
 );
+
+CREATE TABLE IF NOT EXISTS agent_project_memory (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  provider TEXT NOT NULL,
+  insight TEXT NOT NULL,
+  category TEXT NOT NULL DEFAULT 'general'
+    CHECK(category IN ('convention','tool','command','preference','warning','fact','general')),
+  source_task_id TEXT REFERENCES tasks(id) ON DELETE SET NULL,
+  confidence INTEGER NOT NULL DEFAULT 5 CHECK(confidence BETWEEN 1 AND 10),
+  use_count INTEGER NOT NULL DEFAULT 0,
+  last_used_at INTEGER,
+  created_at INTEGER DEFAULT (unixepoch()*1000),
+  updated_at INTEGER DEFAULT (unixepoch()*1000)
+);
+
+CREATE INDEX IF NOT EXISTS idx_agent_project_memory_project
+  ON agent_project_memory(project_id, confidence DESC, use_count DESC);
+CREATE INDEX IF NOT EXISTS idx_agent_project_memory_provider
+  ON agent_project_memory(project_id, provider, confidence DESC);
+
+CREATE TABLE IF NOT EXISTS task_schedules (
+  id TEXT PRIMARY KEY,
+  title_template TEXT NOT NULL,
+  description_template TEXT,
+  workflow_pack_key TEXT NOT NULL DEFAULT 'report',
+  project_id TEXT REFERENCES projects(id) ON DELETE CASCADE,
+  assigned_agent_id TEXT REFERENCES agents(id) ON DELETE SET NULL,
+  workflow_meta_json TEXT,
+  priority INTEGER DEFAULT 0,
+  interval_days INTEGER NOT NULL DEFAULT 7,
+  next_trigger_at INTEGER NOT NULL,
+  last_triggered_at INTEGER,
+  enabled INTEGER NOT NULL DEFAULT 1,
+  created_at INTEGER DEFAULT (unixepoch()*1000),
+  updated_at INTEGER DEFAULT (unixepoch()*1000)
+);
+CREATE INDEX IF NOT EXISTS idx_task_schedules_next ON task_schedules(enabled, next_trigger_at);
 `);
 }

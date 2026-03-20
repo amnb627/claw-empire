@@ -158,6 +158,37 @@ export function applyTaskSchemaMigrations(db: DbLike): void {
   try {
     db.exec("CREATE INDEX IF NOT EXISTS idx_subtasks_delegated ON subtasks(task_id, delegated_task_id)");
   } catch { /* column may not exist in minimal test schemas */ }
+
+  // meeting_type: add 'peer_review' to the CHECK constraint
+  migrateMeetingTypePeerReview(db);
+
+  // Agent project memory table (memory persistence across tasks)
+  try {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS agent_project_memory (
+        id TEXT PRIMARY KEY,
+        project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+        provider TEXT NOT NULL,
+        insight TEXT NOT NULL,
+        category TEXT NOT NULL DEFAULT 'general'
+          CHECK(category IN ('convention','tool','command','preference','warning','fact','general')),
+        source_task_id TEXT REFERENCES tasks(id) ON DELETE SET NULL,
+        confidence INTEGER NOT NULL DEFAULT 5 CHECK(confidence BETWEEN 1 AND 10),
+        use_count INTEGER NOT NULL DEFAULT 0,
+        last_used_at INTEGER,
+        created_at INTEGER DEFAULT (unixepoch()*1000),
+        updated_at INTEGER DEFAULT (unixepoch()*1000)
+      )
+    `);
+    db.exec(
+      "CREATE INDEX IF NOT EXISTS idx_agent_project_memory_project ON agent_project_memory(project_id, confidence DESC, use_count DESC)",
+    );
+    db.exec(
+      "CREATE INDEX IF NOT EXISTS idx_agent_project_memory_provider ON agent_project_memory(project_id, provider, confidence DESC)",
+    );
+  } catch {
+    /* already exists */
+  }
 }
 
 function safeJsonParse(raw: string): unknown {
@@ -712,4 +743,88 @@ function ensureMessagesIdempotencySchema(db: DbLike): void {
     ON messages(idempotency_key)
     WHERE idempotency_key IS NOT NULL
   `);
+}
+
+/**
+ * Migrate meeting_minutes.meeting_type CHECK to include 'peer_review'.
+ * SQLite cannot ALTER CHECK constraints, so we rebuild the table.
+ */
+function migrateMeetingTypePeerReview(db: DbLike): void {
+  const row = db
+    .prepare(
+      `SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'meeting_minutes'`,
+    )
+    .get() as { sql?: string } | undefined;
+  const ddl = (row?.sql ?? "").toLowerCase();
+  if (ddl.includes("'peer_review'")) return; // already migrated
+
+  console.log("[Claw-Empire] Migrating meeting_minutes.meeting_type CHECK to include 'peer_review'");
+
+  const oldTable = "meeting_minutes_peer_review_migration_old";
+  const entriesOld = "meeting_minute_entries_peer_review_migration_old";
+
+  db.exec("PRAGMA foreign_keys = OFF");
+  try {
+    db.exec("BEGIN");
+    try {
+      // Rename dependents first
+      db.exec(`ALTER TABLE meeting_minute_entries RENAME TO ${entriesOld}`);
+      db.exec(`ALTER TABLE meeting_minutes RENAME TO ${oldTable}`);
+
+      db.exec(`
+        CREATE TABLE meeting_minutes (
+          id TEXT PRIMARY KEY,
+          task_id TEXT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+          meeting_type TEXT NOT NULL CHECK(meeting_type IN ('planned','review','peer_review')),
+          round INTEGER NOT NULL,
+          title TEXT NOT NULL,
+          status TEXT NOT NULL DEFAULT 'in_progress' CHECK(status IN ('in_progress','completed','revision_requested','failed')),
+          started_at INTEGER NOT NULL,
+          completed_at INTEGER,
+          created_at INTEGER DEFAULT (unixepoch()*1000)
+        )
+      `);
+      db.exec(`
+        INSERT INTO meeting_minutes (id, task_id, meeting_type, round, title, status, started_at, completed_at, created_at)
+        SELECT id, task_id, meeting_type, round, title, status, started_at, completed_at, created_at
+        FROM ${oldTable}
+      `);
+
+      db.exec(`
+        CREATE TABLE meeting_minute_entries (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          meeting_id TEXT NOT NULL REFERENCES meeting_minutes(id) ON DELETE CASCADE,
+          seq INTEGER NOT NULL,
+          speaker_agent_id TEXT REFERENCES agents(id),
+          speaker_name TEXT NOT NULL,
+          department_name TEXT,
+          role_label TEXT,
+          message_type TEXT NOT NULL DEFAULT 'chat',
+          content TEXT NOT NULL,
+          created_at INTEGER DEFAULT (unixepoch()*1000)
+        )
+      `);
+      db.exec(`
+        INSERT INTO meeting_minute_entries (id, meeting_id, seq, speaker_agent_id, speaker_name, department_name, role_label, message_type, content, created_at)
+        SELECT id, meeting_id, seq, speaker_agent_id, speaker_name, department_name, role_label, message_type, content, created_at
+        FROM ${entriesOld}
+      `);
+
+      db.exec(`DROP TABLE ${entriesOld}`);
+      db.exec(`DROP TABLE ${oldTable}`);
+
+      db.exec("CREATE INDEX IF NOT EXISTS idx_meeting_minutes_task ON meeting_minutes(task_id, started_at DESC)");
+      db.exec("CREATE INDEX IF NOT EXISTS idx_meeting_minute_entries_meeting ON meeting_minute_entries(meeting_id, seq ASC)");
+
+      db.exec("COMMIT");
+    } catch (err) {
+      db.exec("ROLLBACK");
+      // Attempt to restore on failure
+      try { db.exec(`ALTER TABLE ${oldTable} RENAME TO meeting_minutes`); } catch { /* */ }
+      try { db.exec(`ALTER TABLE ${entriesOld} RENAME TO meeting_minute_entries`); } catch { /* */ }
+      throw err;
+    }
+  } finally {
+    db.exec("PRAGMA foreign_keys = ON");
+  }
 }
