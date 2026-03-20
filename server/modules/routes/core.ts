@@ -375,6 +375,7 @@ export function registerRoutesPartA(ctx: RuntimeContext): Record<string, never> 
     stopRequestedTasks,
     killPidTree,
     logsDir,
+    asyncReader: __ctx.asyncReader,
   });
 
   // ---------------------------------------------------------------------------

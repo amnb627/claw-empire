@@ -14,6 +14,7 @@ import type { DatabaseSync } from "node:sqlite";
 import type { Express } from "express";
 import type { WebSocket } from "ws";
 import type { RuntimeContextAutoAugmented } from "./runtime-context-auto-augmented";
+import type { AsyncReader } from "../db/async-reader.ts";
 
 // ---------------------------------------------------------------------------
 // Helper types (mirrors of unexported types in server-main.ts)
@@ -162,6 +163,10 @@ export interface BaseRuntimeContext {
 
   // Mutable — starts empty, populated by routes
   DEPT_KEYWORDS: Record<string, string[]>;
+
+  // Optional async reader backed by a worker thread pool.
+  // Undefined when worker threads are unavailable (test environments, old Node.js).
+  asyncReader?: AsyncReader;
 }
 
 // ---------------------------------------------------------------------------

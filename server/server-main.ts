@@ -43,6 +43,8 @@ import { applyDefaultSeeds } from "./modules/bootstrap/schema/seeds.ts";
 import { reconcileOrphanedProcesses } from "./modules/workflow/agents/process-recovery.ts";
 import { initPackRegistry } from "./modules/workflow/packs/definitions.ts";
 import { pruneStaleClimpireBranches } from "./modules/workflow/core/worktree/branch-pruner.ts";
+import { createAsyncReader } from "./db/async-reader.ts";
+import type { AsyncReader } from "./db/async-reader.ts";
 
 export type { TaskCreationAuditInput } from "./modules/bootstrap/security-audit.ts";
 
@@ -52,6 +54,18 @@ installSecurityMiddleware(app);
 const { dbPath, db, logsDir } = initializeDatabaseRuntime();
 const distDir = DIST_DIR;
 const isProduction = IS_PRODUCTION;
+
+// Worker thread pool for read-heavy queries (e.g. GET /api/tasks).
+// Each worker opens its own read-only DatabaseSync connection to the WAL file,
+// allowing concurrent reads without blocking the main-thread event loop.
+let asyncReader: AsyncReader | undefined;
+try {
+  asyncReader = createAsyncReader(dbPath, 2);
+  console.log("[Claw-Empire] AsyncReader: worker pool (2 threads) initialized");
+} catch (err) {
+  console.warn("[Claw-Empire] AsyncReader: worker pool unavailable, falling back to sync reads:", err);
+  asyncReader = undefined;
+}
 
 const runInTransaction = createRunInTransaction(db);
 const readSettingString = createReadSettingString(db);
@@ -124,6 +138,10 @@ const runtimeContext: Record<string, any> & BaseRuntimeContext = {
   express,
 
   DEPT_KEYWORDS: {},
+
+  // Worker-thread async reader for non-blocking SELECT queries.
+  // Passed through to route handlers that benefit from offloading heavy reads.
+  asyncReader,
 };
 
 const runtimeProxy = createDeferredRuntimeProxy(runtimeContext);
@@ -148,5 +166,15 @@ reconcileOrphanedProcesses(db).catch((err) => {
     });
   }
 }
+
+// Gracefully close the async reader worker pool on process exit.
+// This allows worker threads to finish current queries before termination.
+function shutdownAsyncReader() {
+  if (asyncReader) {
+    asyncReader.close().catch(() => {/* non-fatal */});
+  }
+}
+process.once("SIGTERM", shutdownAsyncReader);
+process.once("SIGINT", shutdownAsyncReader);
 
 startLifecycle(runtimeContext as RuntimeContext);

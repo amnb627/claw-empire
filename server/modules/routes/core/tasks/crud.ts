@@ -8,6 +8,7 @@ import type { MeetingMinuteEntryRow, MeetingMinutesRow } from "../../shared/type
 import { isKnownPackKey, DEFAULT_WORKFLOW_PACK_KEY } from "../../../workflow/packs/definitions.ts";
 import { resolveWorkflowPackKeyForTask } from "../../../workflow/packs/task-pack-resolver.ts";
 import { validateTaskCreateBody } from "./validation.ts";
+import type { AsyncReader } from "../../../../db/async-reader.ts";
 
 export type TaskCrudRouteDeps = Pick<
   RuntimeContext,
@@ -27,7 +28,15 @@ export type TaskCrudRouteDeps = Pick<
   | "stopRequestedTasks"
   | "killPidTree"
   | "logsDir"
->;
+> & {
+  /**
+   * Optional async reader backed by a worker thread pool.
+   * When provided, GET /api/tasks offloads the main SELECT to a worker thread
+   * so the event loop is not blocked during heavy list queries.
+   * When absent, the existing synchronous db path is used (tests / simple deploys).
+   */
+  asyncReader?: AsyncReader;
+};
 
 export function registerTaskCrudRoutes(deps: TaskCrudRouteDeps): void {
   const {
@@ -46,6 +55,7 @@ export function registerTaskCrudRoutes(deps: TaskCrudRouteDeps): void {
     activeProcesses,
     stopRequestedTasks,
     killPidTree,
+    asyncReader,
     logsDir,
   } = deps;
 
@@ -137,11 +147,7 @@ export function registerTaskCrudRoutes(deps: TaskCrudRouteDeps): void {
     )
   )`;
 
-    let tasks: unknown[];
-    try {
-      tasks = db
-        .prepare(
-          `
+    const primarySql = `
       SELECT t.*,
         a.name AS agent_name,
         a.avatar_emoji AS agent_avatar,
@@ -160,13 +166,21 @@ export function registerTaskCrudRoutes(deps: TaskCrudRouteDeps): void {
       LEFT JOIN projects p ON t.project_id = p.id
       ${where}
       ORDER BY t.priority DESC, t.updated_at DESC
-    `,
-        )
-        .all(...(params as SQLInputValue[]));
-    } catch {
-      tasks = db
-        .prepare(
-          `
+    `;
+
+    // Async path: offload to worker thread so the event loop is not blocked.
+    if (asyncReader) {
+      return asyncReader
+        .query(primarySql, params as SQLInputValue[])
+        .then((tasks) => res.json({ tasks }))
+        .catch((err: unknown) => {
+          console.error("[GET /api/tasks] asyncReader error:", err);
+          res.status(500).json({ error: "query_failed" });
+        });
+    }
+
+    // Sync path (default): used in tests and when no async reader is configured.
+    const fallbackSql = `
       SELECT t.*,
         a.name AS agent_name,
         a.avatar_emoji AS agent_avatar,
@@ -182,9 +196,13 @@ export function registerTaskCrudRoutes(deps: TaskCrudRouteDeps): void {
       LEFT JOIN projects p ON t.project_id = p.id
       ${where}
       ORDER BY t.priority DESC, t.updated_at DESC
-    `,
-        )
-        .all(...(params as SQLInputValue[]));
+    `;
+
+    let tasks: unknown[];
+    try {
+      tasks = db.prepare(primarySql).all(...(params as SQLInputValue[]));
+    } catch {
+      tasks = db.prepare(fallbackSql).all(...(params as SQLInputValue[]));
     }
 
     res.json({ tasks });
