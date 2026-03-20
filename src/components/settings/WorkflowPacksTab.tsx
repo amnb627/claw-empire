@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import * as api from "../../api";
-import type { WorkflowPackConfig } from "../../api";
+import type { WorkflowPackConfig, PackAnalytics } from "../../api";
 import type { TFunction } from "./types";
 
 const BUILTIN_PACK_KEYS = new Set([
@@ -294,6 +294,199 @@ function PackForm({ t, isEdit, editKey, form, setForm, saving, saveError, onSave
   );
 }
 
+// --- Analytics Panel ---
+const PERIOD_OPTIONS = [7, 30, 90] as const;
+type PeriodDays = (typeof PERIOD_OPTIONS)[number];
+
+function formatDuration(ms: number): string {
+  if (ms < 60_000) return `${Math.round(ms / 1000)}s`;
+  const minutes = Math.floor(ms / 60_000);
+  const seconds = Math.round((ms % 60_000) / 1000);
+  return seconds > 0 ? `${minutes}m ${seconds}s` : `${minutes}m`;
+}
+
+function statusIcon(status: string): string {
+  if (status === "done") return "✅";
+  if (status === "cancelled") return "❌";
+  if (status === "review") return "🔍";
+  if (status === "in_progress") return "⚙️";
+  return "⏳";
+}
+
+function timeAgo(ts: number): string {
+  const diff = Date.now() - ts;
+  if (diff < 60_000) return "just now";
+  if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}m ago`;
+  if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)}h ago`;
+  return `${Math.floor(diff / 86_400_000)}d ago`;
+}
+
+interface PackAnalyticsPanelProps {
+  packKey: string;
+  t: TFunction;
+}
+
+function PackAnalyticsPanel({ packKey, t }: PackAnalyticsPanelProps) {
+  const [period, setPeriod] = useState<PeriodDays>(30);
+  const [analytics, setAnalytics] = useState<PackAnalytics | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    api
+      .getPackAnalytics(packKey, period)
+      .then((data) => {
+        if (!cancelled) setAnalytics(data);
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err instanceof Error ? err.message : String(err));
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [packKey, period]);
+
+  return (
+    <div
+      className="mt-2 rounded-lg p-4 text-xs space-y-3"
+      style={{ background: "var(--th-card-bg)", border: "1px solid var(--th-card-border)" }}
+      data-testid="analytics-panel"
+    >
+      {/* Header row */}
+      <div className="flex items-center justify-between gap-2">
+        <span className="font-semibold" style={{ color: "var(--th-text-primary)" }}>
+          {t({ ko: "성능 분석", en: "Performance Analytics", ja: "パフォーマンス分析", zh: "性能分析" })}
+        </span>
+        <div className="flex gap-1">
+          {PERIOD_OPTIONS.map((d) => (
+            <button
+              key={d}
+              type="button"
+              onClick={() => setPeriod(d)}
+              className={`px-2 py-0.5 rounded text-xs font-medium transition-colors ${
+                period === d ? "bg-blue-600 text-white" : ""
+              }`}
+              style={
+                period !== d
+                  ? { background: "var(--th-input-bg)", color: "var(--th-text-secondary)", border: "1px solid var(--th-card-border)" }
+                  : {}
+              }
+            >
+              {d}d
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {loading && (
+        <p style={{ color: "var(--th-text-secondary)" }}>
+          {t({ ko: "로딩 중...", en: "Loading...", ja: "読み込み中...", zh: "加载中..." })}
+        </p>
+      )}
+      {error && (
+        <p className="text-red-400" role="alert">
+          {error}
+        </p>
+      )}
+      {!loading && !error && analytics && (
+        <>
+          {/* Key metrics */}
+          <div className="grid grid-cols-4 gap-2">
+            {[
+              {
+                label: t({ ko: "작업", en: "Tasks", ja: "タスク", zh: "任务" }),
+                value: String(analytics.total),
+              },
+              {
+                label: t({ ko: "완료", en: "Done", ja: "完了", zh: "完成" }),
+                value: String(analytics.completed),
+              },
+              {
+                label: t({ ko: "첫 통과", en: "First-pass", ja: "初回合格", zh: "首次通过" }),
+                value:
+                  analytics.first_pass_rate !== null
+                    ? `${analytics.first_pass} (${analytics.first_pass_rate}%)`
+                    : String(analytics.first_pass),
+              },
+              {
+                label: t({ ko: "평균 시간", en: "Avg time", ja: "平均時間", zh: "平均时间" }),
+                value:
+                  analytics.avg_completion_ms !== null
+                    ? formatDuration(analytics.avg_completion_ms)
+                    : "—",
+              },
+            ].map(({ label, value }) => (
+              <div
+                key={label}
+                className="rounded p-2 text-center"
+                style={{ background: "var(--th-input-bg)" }}
+              >
+                <div className="font-semibold" style={{ color: "var(--th-text-primary)" }}>
+                  {value}
+                </div>
+                <div style={{ color: "var(--th-text-muted, #94a3b8)" }}>{label}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Top revision reasons */}
+          {analytics.top_revision_reasons.length > 0 && (
+            <div>
+              <div className="mb-1 font-medium" style={{ color: "var(--th-text-secondary)" }}>
+                {t({ ko: "주요 재작업 사유", en: "Top issues", ja: "主な修正理由", zh: "主要问题" })}
+              </div>
+              <ul className="space-y-0.5">
+                {analytics.top_revision_reasons.map((r) => (
+                  <li key={r.normalized_note} style={{ color: "var(--th-text-secondary)" }}>
+                    <span className="text-orange-400 font-medium">×{r.count}</span>{" "}
+                    {r.normalized_note}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Recent tasks */}
+          {analytics.recent_tasks.length > 0 && (
+            <div>
+              <div className="mb-1 font-medium" style={{ color: "var(--th-text-secondary)" }}>
+                {t({ ko: "최근 작업", en: "Recent", ja: "最近のタスク", zh: "最近任务" })}
+              </div>
+              <ul className="space-y-0.5">
+                {analytics.recent_tasks.map((task) => (
+                  <li
+                    key={task.id}
+                    className="flex items-center gap-1 truncate"
+                    style={{ color: "var(--th-text-secondary)" }}
+                  >
+                    <span>{statusIcon(task.status)}</span>
+                    <span className="flex-1 truncate">{task.title}</span>
+                    <span style={{ color: "var(--th-text-muted, #94a3b8)" }}>
+                      {timeAgo(task.created_at)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {analytics.total === 0 && (
+            <p style={{ color: "var(--th-text-muted, #94a3b8)" }}>
+              {t({ ko: "이 기간에 작업 없음.", en: "No tasks in this period.", ja: "この期間にタスクなし。", zh: "该期间无任务。" })}
+            </p>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
 // --- Pack Row ---
 interface PackRowProps {
   pack: WorkflowPackConfig;
@@ -307,73 +500,97 @@ interface PackRowProps {
 function PackRow({ pack, toggling, onToggle, onEdit, onDelete, t }: PackRowProps) {
   const icon = PACK_ICONS[pack.key] ?? "📦";
   const builtin = isBuiltin(pack.key);
+  const [showAnalytics, setShowAnalytics] = useState(false);
 
   return (
     <div
-      className={`flex items-center gap-3 rounded-lg px-4 py-3 transition-opacity ${!pack.enabled ? "opacity-60" : ""}`}
+      className={`rounded-lg transition-opacity ${!pack.enabled ? "opacity-60" : ""}`}
       style={{ background: "var(--th-input-bg)", border: "1px solid var(--th-card-border)" }}
     >
-      <span className="text-xl select-none" aria-hidden="true">
-        {icon}
-      </span>
-
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-sm font-medium truncate" style={{ color: "var(--th-text-primary)" }}>
-            {pack.name}
-          </span>
-          {builtin && (
-            <span
-              className="text-xs px-1.5 py-0.5 rounded font-medium"
-              style={{ background: "var(--th-accent-bg, rgba(59,130,246,0.15))", color: "var(--th-accent, #60a5fa)" }}
-            >
-              {t({ ko: "내장", en: "Built-in", ja: "組込み", zh: "内置" })}
-            </span>
-          )}
-        </div>
-        <span className="text-xs" style={{ color: "var(--th-text-muted, #94a3b8)" }}>
-          {pack.key}
+      <div className="flex items-center gap-3 px-4 py-3">
+        <span className="text-xl select-none" aria-hidden="true">
+          {icon}
         </span>
-      </div>
 
-      <div className="flex items-center gap-2 shrink-0">
-        <ToggleSwitch
-          checked={pack.enabled}
-          onChange={() => onToggle(pack)}
-          disabled={toggling}
-          label={`${t({ ko: "활성화", en: "Enable", ja: "有効", zh: "启用" })} ${pack.name}`}
-        />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-sm font-medium truncate" style={{ color: "var(--th-text-primary)" }}>
+              {pack.name}
+            </span>
+            {builtin && (
+              <span
+                className="text-xs px-1.5 py-0.5 rounded font-medium"
+                style={{ background: "var(--th-accent-bg, rgba(59,130,246,0.15))", color: "var(--th-accent, #60a5fa)" }}
+              >
+                {t({ ko: "내장", en: "Built-in", ja: "組込み", zh: "内置" })}
+              </span>
+            )}
+          </div>
+          <span className="text-xs" style={{ color: "var(--th-text-muted, #94a3b8)" }}>
+            {pack.key}
+          </span>
+        </div>
 
-        <button
-          type="button"
-          onClick={() => onEdit(pack)}
-          aria-label={`${t({ ko: "편집", en: "Edit", ja: "編集", zh: "编辑" })} ${pack.name}`}
-          className="px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors"
-          style={{
-            background: "var(--th-input-bg)",
-            color: "var(--th-text-secondary)",
-            border: "1px solid var(--th-card-border)",
-          }}
-        >
-          {t({ ko: "편집", en: "Edit", ja: "編集", zh: "编辑" })}
-        </button>
-
-        {!builtin && (
+        <div className="flex items-center gap-2 shrink-0">
           <button
             type="button"
-            onClick={() => onDelete(pack)}
-            aria-label={`${t({ ko: "삭제", en: "Delete", ja: "削除", zh: "删除" })} ${pack.name}`}
+            onClick={() => setShowAnalytics((v) => !v)}
+            aria-label={`${t({ ko: "통계", en: "Stats", ja: "統計", zh: "统计" })} ${pack.name}`}
+            aria-expanded={showAnalytics}
             className="px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors"
             style={{
-              background: "var(--th-danger-bg, rgba(248,113,113,0.12))",
-              color: "var(--th-danger, #f87171)",
-              border: "1px solid var(--th-danger-border, rgba(248,113,113,0.25))",
+              background: showAnalytics ? "var(--th-accent-bg, rgba(59,130,246,0.15))" : "var(--th-input-bg)",
+              color: showAnalytics ? "var(--th-accent, #60a5fa)" : "var(--th-text-secondary)",
+              border: "1px solid var(--th-card-border)",
             }}
           >
-            {t({ ko: "삭제", en: "Delete", ja: "削除", zh: "删除" })}
+            📊 {t({ ko: "통계", en: "Stats", ja: "統計", zh: "统计" })}
           </button>
-        )}
+
+          <ToggleSwitch
+            checked={pack.enabled}
+            onChange={() => onToggle(pack)}
+            disabled={toggling}
+            label={`${t({ ko: "활성화", en: "Enable", ja: "有効", zh: "启用" })} ${pack.name}`}
+          />
+
+          <button
+            type="button"
+            onClick={() => onEdit(pack)}
+            aria-label={`${t({ ko: "편집", en: "Edit", ja: "編集", zh: "编辑" })} ${pack.name}`}
+            className="px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors"
+            style={{
+              background: "var(--th-input-bg)",
+              color: "var(--th-text-secondary)",
+              border: "1px solid var(--th-card-border)",
+            }}
+          >
+            {t({ ko: "편집", en: "Edit", ja: "編集", zh: "编辑" })}
+          </button>
+
+          {!builtin && (
+            <button
+              type="button"
+              onClick={() => onDelete(pack)}
+              aria-label={`${t({ ko: "삭제", en: "Delete", ja: "削除", zh: "删除" })} ${pack.name}`}
+              className="px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors"
+              style={{
+                background: "var(--th-danger-bg, rgba(248,113,113,0.12))",
+                color: "var(--th-danger, #f87171)",
+                border: "1px solid var(--th-danger-border, rgba(248,113,113,0.25))",
+              }}
+            >
+              {t({ ko: "삭제", en: "Delete", ja: "削除", zh: "삭제" })}
+            </button>
+          )}
+        </div>
       </div>
+
+      {showAnalytics && (
+        <div className="px-4 pb-4">
+          <PackAnalyticsPanel packKey={pack.key} t={t} />
+        </div>
+      )}
     </div>
   );
 }

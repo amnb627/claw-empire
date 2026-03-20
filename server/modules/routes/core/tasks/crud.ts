@@ -579,4 +579,75 @@ export function registerTaskCrudRoutes(deps: TaskCrudRouteDeps): void {
     broadcast("task_update", { id, deleted: true });
     res.json({ ok: true });
   });
+
+  // Output file viewer endpoints
+  app.get("/api/tasks/:id/output", (req, res) => {
+    const taskId = String(req.params.id);
+    const task = db
+      .prepare("SELECT project_path, workflow_meta_json FROM tasks WHERE id = ?")
+      .get(taskId) as { project_path: string | null; workflow_meta_json: string | null } | undefined;
+
+    if (!task?.project_path) return res.json({ files: [] });
+
+    const outputDir = path.join(task.project_path, "claw_output", taskId);
+    if (!fs.existsSync(outputDir)) return res.json({ files: [] });
+
+    let filenames: string[] = [];
+    try {
+      filenames = fs.readdirSync(outputDir);
+    } catch {
+      return res.json({ files: [] });
+    }
+
+    const files = filenames
+      .filter((f) => !f.startsWith("."))
+      .map((filename) => {
+        const fullPath = path.join(outputDir, filename);
+        let stat: fs.Stats;
+        try {
+          stat = fs.statSync(fullPath);
+        } catch {
+          return null;
+        }
+        return {
+          name: filename,
+          size: stat.size,
+          modified: stat.mtimeMs,
+          previewable: /\.(md|txt|json|log|ts|tsx|js|py|html|csv)$/.test(filename),
+        };
+      })
+      .filter(Boolean)
+      .sort((a, b) => (b!.modified - a!.modified));
+
+    res.json({ files, output_dir: outputDir });
+  });
+
+  app.get("/api/tasks/:id/output/:filename", (req, res) => {
+    const taskId = String(req.params.id);
+    const filename = String(req.params.filename);
+
+    const task = db
+      .prepare("SELECT project_path FROM tasks WHERE id = ?")
+      .get(taskId) as { project_path: string | null } | undefined;
+
+    if (!task?.project_path) return res.status(404).json({ error: "not_found" });
+
+    const filePath = path.join(task.project_path, "claw_output", taskId, filename);
+    if (!fs.existsSync(filePath)) return res.status(404).json({ error: "not_found" });
+
+    // Security: ensure file is within the expected project directory
+    const resolved = path.resolve(filePath);
+    const expectedBase = path.resolve(task.project_path);
+    if (!resolved.startsWith(expectedBase)) return res.status(403).json({ error: "forbidden" });
+
+    let content: string;
+    try {
+      const raw = fs.readFileSync(filePath, "utf-8");
+      content = raw.slice(0, 50000); // 50kb limit
+    } catch {
+      return res.status(500).json({ error: "read_failed" });
+    }
+
+    res.json({ filename, content });
+  });
 }

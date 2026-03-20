@@ -14,6 +14,8 @@ import { registerOAuthRoutes } from "./ops/oauth/routes.ts";
 import { registerSkillRoutes } from "./ops/skills/routes.ts";
 import { registerApiDocsRoutes } from "./ops/api-docs.ts";
 import { registerWorkflowPackRoutes } from "./ops/workflow-packs.ts";
+import { registerScheduleRoutes } from "./ops/schedules.ts";
+import { checkAndFireSchedules } from "../workflow/scheduling/schedule-checker.ts";
 
 export function registerRoutesPartC(ctx: RuntimeContext): RouteOpsExports {
   const __ctx: RuntimeContext = ctx;
@@ -231,6 +233,18 @@ export function registerRoutesPartC(ctx: RuntimeContext): RouteOpsExports {
     nowMs,
     normalizeTextField,
   });
+
+  registerScheduleRoutes({
+    app,
+    db,
+    nowMs,
+    broadcast,
+    normalizeTextField,
+  });
+
+  // Schedule checker: run once on startup and every 5 minutes
+  checkAndFireSchedules(db, broadcast);
+  setInterval(() => checkAndFireSchedules(db, broadcast), 5 * 60 * 1000);
 
   registerTaskReportRoutes(__ctx);
 

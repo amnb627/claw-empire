@@ -107,6 +107,7 @@ interface AppMainLayoutProps {
     project_path?: string;
     assigned_agent_id?: string;
     workflow_pack_key?: WorkflowPackKey;
+    workflow_meta_json?: Record<string, unknown>;
   }) => Promise<void>;
   onUpdateTask: (id: string, data: Partial<Task>) => Promise<void>;
   onDeleteTask: (id: string) => Promise<void>;
@@ -516,6 +517,7 @@ export default function AppMainLayout({
                 onResumeTask={onResumeTask}
                 onOpenTerminal={onOpenTerminal}
                 onOpenMeetingMinutes={onOpenMeetingMinutes}
+                onNavigateToView={setView}
               />
             )}
 

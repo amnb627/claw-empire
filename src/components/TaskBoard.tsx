@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { bulkHideTasks } from "../api";
 import { useI18n } from "../i18n";
 import type { Agent, Department, SubTask, Task, WorkflowPackKey } from "../types";
@@ -7,7 +7,13 @@ import BulkHideModal from "./taskboard/BulkHideModal";
 import CreateTaskModal from "./taskboard/CreateTaskModal";
 import FilterBar from "./taskboard/FilterBar";
 import TaskCard from "./taskboard/TaskCard";
+import TaskSearchBar from "./taskboard/TaskSearchBar";
+import KeyboardHelpModal from "./KeyboardHelpModal";
 import { COLUMNS, isHideableStatus, taskStatusLabel, type HideableStatus } from "./taskboard/constants";
+import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
+import { useTaskSearch } from "../hooks/useTaskSearch";
+import type { TaskFilter } from "../hooks/useTaskSearch";
+import type { View } from "../app/types";
 
 interface TaskBoardProps {
   tasks: Task[];
@@ -24,6 +30,7 @@ interface TaskBoardProps {
     project_path?: string;
     assigned_agent_id?: string;
     workflow_pack_key?: WorkflowPackKey;
+    workflow_meta_json?: Record<string, unknown>;
   }) => void;
   onUpdateTask: (id: string, data: Partial<Task>) => void;
   onDeleteTask: (id: string) => void;
@@ -36,7 +43,16 @@ interface TaskBoardProps {
   onOpenMeetingMinutes?: (taskId: string) => void;
   onMergeTask?: (id: string) => void;
   onDiscardTask?: (id: string) => void;
+  onNavigateToView?: (view: View) => void;
 }
+
+const EMPTY_FILTER: TaskFilter = {
+  query: "",
+  status: [],
+  packKey: [],
+  projectId: [],
+  priority: null,
+};
 
 export function TaskBoard({
   tasks,
@@ -55,16 +71,33 @@ export function TaskBoard({
   onOpenMeetingMinutes,
   onMergeTask,
   onDiscardTask,
+  onNavigateToView,
 }: TaskBoardProps) {
+  void onMergeTask;
+  void onDiscardTask;
   const { t } = useI18n();
   const [showCreate, setShowCreate] = useState(false);
   const [showProjectManager, setShowProjectManager] = useState(false);
   const [showBulkHideModal, setShowBulkHideModal] = useState(false);
+  const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
   const [filterDept, setFilterDept] = useState("");
   const [filterAgent, setFilterAgent] = useState("");
   const [filterType, setFilterType] = useState("");
   const [search, setSearch] = useState("");
   const [showAllTasks, setShowAllTasks] = useState(false);
+
+  // Advanced search filter state
+  const [advancedFilter, setAdvancedFilter] = useState<TaskFilter>(EMPTY_FILTER);
+
+  // Task navigation (j/k selection)
+  const [selectedTaskIndex, setSelectedTaskIndex] = useState<number>(-1);
+
+  // Sequence ref for g→h / g→s shortcuts
+  const gPressedRef = useRef(false);
+  const gTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Search input ref for '/' focusing
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const hiddenTaskIds = useMemo(
     () => new Set(tasks.filter((task) => task.hidden === 1).map((task) => task.id)),
@@ -90,7 +123,8 @@ export function TaskBoard({
     bulkHideTasks(statuses, 1);
   }, []);
 
-  const filteredTasks = useMemo(() => {
+  // Legacy filter (department / agent / type / text search)
+  const legacyFilteredTasks = useMemo(() => {
     return tasks.filter((task) => {
       if (filterDept && task.department_id !== filterDept) return false;
       if (filterAgent && task.assigned_agent_id !== filterAgent) return false;
@@ -102,6 +136,9 @@ export function TaskBoard({
     });
   }, [tasks, filterDept, filterAgent, filterType, search, hiddenTaskIds, showAllTasks]);
 
+  // Apply advanced (query + status pills) filter on top of legacy filters
+  const filteredTasks = useTaskSearch(legacyFilteredTasks, advancedFilter);
+
   const tasksByStatus = useMemo(() => {
     const grouped: Record<string, Task[]> = {};
     for (const column of COLUMNS) {
@@ -111,6 +148,15 @@ export function TaskBoard({
     }
     return grouped;
   }, [filteredTasks]);
+
+  // Flat list of all visible tasks for j/k navigation
+  const flatTaskList = useMemo(() => {
+    const result: Task[] = [];
+    for (const column of COLUMNS) {
+      result.push(...(tasksByStatus[column.status] ?? []));
+    }
+    return result;
+  }, [tasksByStatus]);
 
   const subtasksByTask = useMemo(() => {
     const grouped: Record<string, SubTask[]> = {};
@@ -129,6 +175,123 @@ export function TaskBoard({
     }
     return count;
   }, [tasks, hiddenTaskIds]);
+
+  // Scroll selected task card into view
+  const scrollToTask = useCallback((taskId: string) => {
+    const el = document.querySelector(`[data-task-id="${taskId}"]`);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, []);
+
+  // Keyboard shortcuts
+  useKeyboardShortcuts([
+    {
+      key: "n",
+      description: "New task",
+      handler: () => setShowCreate(true),
+      when: () => !showCreate && !showProjectManager && !showBulkHideModal && !showKeyboardHelp,
+    },
+    {
+      key: "/",
+      description: "Focus search",
+      handler: () => {
+        searchInputRef.current?.focus();
+        searchInputRef.current?.select();
+      },
+    },
+    {
+      key: "Escape",
+      description: "Close modal / clear search",
+      handler: () => {
+        if (showKeyboardHelp) { setShowKeyboardHelp(false); return; }
+        if (showCreate) { setShowCreate(false); return; }
+        if (showProjectManager) { setShowProjectManager(false); return; }
+        if (showBulkHideModal) { setShowBulkHideModal(false); return; }
+        if (advancedFilter.query || advancedFilter.status.length > 0) {
+          setAdvancedFilter(EMPTY_FILTER);
+          return;
+        }
+        setSelectedTaskIndex(-1);
+      },
+    },
+    {
+      key: "j",
+      description: "Select next task",
+      handler: () => {
+        setSelectedTaskIndex((prev) => {
+          const next = Math.min(prev + 1, flatTaskList.length - 1);
+          const task = flatTaskList[next];
+          if (task) scrollToTask(task.id);
+          return next;
+        });
+      },
+    },
+    {
+      key: "k",
+      description: "Select previous task",
+      handler: () => {
+        setSelectedTaskIndex((prev) => {
+          const next = Math.max(prev - 1, 0);
+          const task = flatTaskList[next];
+          if (task) scrollToTask(task.id);
+          return next;
+        });
+      },
+    },
+    {
+      key: "Enter",
+      description: "Expand selected task",
+      handler: () => {
+        const task = flatTaskList[selectedTaskIndex];
+        if (task) {
+          // Click the task title toggle button inside the selected card
+          const el = document.querySelector<HTMLButtonElement>(
+            `[data-task-id="${task.id}"] .task-card-expand-btn`,
+          );
+          el?.click();
+        }
+      },
+      when: () => selectedTaskIndex >= 0 && selectedTaskIndex < flatTaskList.length,
+    },
+    {
+      key: "g",
+      description: "Go-to prefix key",
+      handler: () => {
+        gPressedRef.current = true;
+        if (gTimerRef.current) clearTimeout(gTimerRef.current);
+        gTimerRef.current = setTimeout(() => {
+          gPressedRef.current = false;
+        }, 1000);
+      },
+    },
+    {
+      key: "h",
+      description: "Go to task board (after g)",
+      handler: () => {
+        if (gPressedRef.current) {
+          gPressedRef.current = false;
+          if (gTimerRef.current) clearTimeout(gTimerRef.current);
+          onNavigateToView?.("tasks");
+        }
+      },
+    },
+    {
+      key: "s",
+      description: "Go to settings (after g)",
+      handler: () => {
+        if (gPressedRef.current) {
+          gPressedRef.current = false;
+          if (gTimerRef.current) clearTimeout(gTimerRef.current);
+          onNavigateToView?.("settings");
+        }
+      },
+    },
+    {
+      key: "?",
+      shift: true,
+      description: "Show keyboard shortcuts help",
+      handler: () => setShowKeyboardHelp(true),
+    },
+  ]);
 
   return (
     <div className="taskboard-shell flex h-full flex-col gap-4 bg-slate-950 p-3 sm:p-4">
@@ -219,8 +382,35 @@ export function TaskBoard({
           >
             + {t({ ko: "새 업무", en: "New Task", ja: "新規タスク", zh: "新建任务" })}
           </button>
+          <button
+            onClick={() => setShowKeyboardHelp(true)}
+            className="rounded-lg border border-slate-700 px-2 py-1.5 text-xs text-slate-500 transition hover:bg-slate-800 hover:text-slate-300"
+            title={t({
+              ko: "키보드 단축키 (?)",
+              en: "Keyboard shortcuts (?)",
+              ja: "キーボードショートカット (?)",
+              zh: "键盘快捷键 (?)",
+            })}
+            aria-label={t({
+              ko: "키보드 단축키",
+              en: "Keyboard shortcuts",
+              ja: "キーボードショートカット",
+              zh: "键盘快捷键",
+            })}
+          >
+            ?
+          </button>
         </div>
       </div>
+
+      {/* Advanced search + status filter bar */}
+      <TaskSearchBar
+        filter={advancedFilter}
+        totalCount={legacyFilteredTasks.length}
+        filteredCount={filteredTasks.length}
+        onFilterChange={setAdvancedFilter}
+        searchRef={searchInputRef}
+      />
 
       <FilterBar
         agents={agents}
@@ -261,29 +451,39 @@ export function TaskBoard({
                     {t({ ko: "업무 없음", en: "No tasks", ja: "タスクなし", zh: "暂无任务" })}
                   </div>
                 ) : (
-                  columnTasks.map((task) => (
-                    <TaskCard
-                      key={task.id}
-                      task={task}
-                      agents={agents}
-                      departments={departments}
-                      taskSubtasks={subtasksByTask[task.id] ?? []}
-                      isHiddenTask={hiddenTaskIds.has(task.id)}
-                      onUpdateTask={onUpdateTask}
-                      onDeleteTask={onDeleteTask}
-                      onAssignTask={onAssignTask}
-                      onRunTask={onRunTask}
-                      onStopTask={onStopTask}
-                      onPauseTask={onPauseTask}
-                      onResumeTask={onResumeTask}
-                      onOpenTerminal={onOpenTerminal}
-                      onOpenMeetingMinutes={onOpenMeetingMinutes}
-                      onMergeTask={onMergeTask}
-                      onDiscardTask={onDiscardTask}
-                      onHideTask={hideTask}
-                      onUnhideTask={unhideTask}
-                    />
-                  ))
+                  columnTasks.map((task) => {
+                    const flatIndex = flatTaskList.findIndex((ft) => ft.id === task.id);
+                    const isSelected = flatIndex === selectedTaskIndex && selectedTaskIndex >= 0;
+                    return (
+                      <div
+                        key={task.id}
+                        data-task-id={task.id}
+                        className={isSelected ? "rounded-xl ring-2 ring-blue-500" : ""}
+                        onClick={() => setSelectedTaskIndex(flatIndex)}
+                      >
+                        <TaskCard
+                          task={task}
+                          agents={agents}
+                          departments={departments}
+                          taskSubtasks={subtasksByTask[task.id] ?? []}
+                          isHiddenTask={hiddenTaskIds.has(task.id)}
+                          onUpdateTask={onUpdateTask}
+                          onDeleteTask={onDeleteTask}
+                          onAssignTask={onAssignTask}
+                          onRunTask={onRunTask}
+                          onStopTask={onStopTask}
+                          onPauseTask={onPauseTask}
+                          onResumeTask={onResumeTask}
+                          onOpenTerminal={onOpenTerminal}
+                          onOpenMeetingMinutes={onOpenMeetingMinutes}
+                          onMergeTask={onMergeTask}
+                          onDiscardTask={onDiscardTask}
+                          onHideTask={hideTask}
+                          onUnhideTask={unhideTask}
+                        />
+                      </div>
+                    );
+                  })
                 )}
               </div>
             </div>
@@ -316,6 +516,8 @@ export function TaskBoard({
           }}
         />
       )}
+
+      {showKeyboardHelp && <KeyboardHelpModal onClose={() => setShowKeyboardHelp(false)} />}
     </div>
   );
 }

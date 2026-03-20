@@ -54,6 +54,32 @@ export async function getTaskDiff(id: string): Promise<TaskDiffResult> {
   return request<TaskDiffResult>(`/api/tasks/${id}/diff`);
 }
 
+// Output file viewer
+export interface OutputFileEntry {
+  name: string;
+  size: number;
+  modified: number;
+  previewable: boolean;
+}
+
+export interface TaskOutputListResult {
+  files: OutputFileEntry[];
+  output_dir?: string;
+}
+
+export interface TaskOutputFileResult {
+  filename: string;
+  content: string;
+}
+
+export async function getTaskOutputFiles(id: string): Promise<TaskOutputListResult> {
+  return request<TaskOutputListResult>(`/api/tasks/${id}/output`);
+}
+
+export async function getTaskOutputFile(id: string, filename: string): Promise<TaskOutputFileResult> {
+  return request<TaskOutputFileResult>(`/api/tasks/${id}/output/${encodeURIComponent(filename)}`);
+}
+
 export async function getTaskVerifyCommit(id: string): Promise<TaskVerifyCommitResult> {
   return request<TaskVerifyCommitResult>(`/api/tasks/${id}/verify-commit`);
 }
@@ -315,6 +341,107 @@ export async function deleteWorkflowPack(key: string): Promise<{ ok: boolean; ke
   return request<{ ok: boolean; key: string }>(`/api/workflow-packs/${encodeURIComponent(key)}`, {
     method: "DELETE",
   });
+}
+
+// Pack Analytics
+export interface PackAnalytics {
+  key: string;
+  period_days: number;
+  total: number;
+  completed: number;
+  first_pass: number;
+  first_pass_rate: number | null;
+  avg_completion_ms: number | null;
+  top_revision_reasons: Array<{ normalized_note: string; count: number }>;
+  recent_tasks: Array<{
+    id: string;
+    title: string;
+    status: string;
+    created_at: number;
+    completed_at: number | null;
+    revision_count: number;
+  }>;
+}
+
+export interface PackAnalyticsSummaryItem {
+  key: string;
+  total: number;
+  completed: number;
+  first_pass: number;
+  first_pass_rate: number | null;
+}
+
+export async function getPackAnalytics(key: string, days = 30): Promise<PackAnalytics> {
+  return request<PackAnalytics>(`/api/workflow-packs/${encodeURIComponent(key)}/analytics?days=${days}`);
+}
+
+export async function getPackAnalyticsSummary(
+  days = 30,
+): Promise<{ period_days: number; packs: PackAnalyticsSummaryItem[] }> {
+  return request<{ period_days: number; packs: PackAnalyticsSummaryItem[] }>(
+    `/api/workflow-packs/analytics/summary?days=${days}`,
+  );
+}
+
+// Task Schedules
+export interface TaskSchedule {
+  id: string;
+  title_template: string;
+  description_template: string | null;
+  workflow_pack_key: string;
+  project_id: string | null;
+  assigned_agent_id: string | null;
+  workflow_meta_json: string | null;
+  priority: number;
+  interval_days: number;
+  next_trigger_at: number;
+  last_triggered_at: number | null;
+  enabled: boolean;
+  created_at: number;
+  updated_at: number;
+}
+
+export type TaskScheduleCreateInput = {
+  title_template: string;
+  description_template?: string | null;
+  workflow_pack_key?: string;
+  project_id?: string | null;
+  assigned_agent_id?: string | null;
+  workflow_meta_json?: string | null;
+  priority?: number;
+  interval_days: number;
+  next_trigger_at?: number;
+  enabled?: boolean;
+};
+
+export async function getSchedules(): Promise<TaskSchedule[]> {
+  const j = await request<{ schedules: TaskSchedule[] }>("/api/schedules");
+  return j.schedules ?? [];
+}
+
+export async function createSchedule(
+  input: TaskScheduleCreateInput,
+): Promise<{ ok: boolean; schedule: TaskSchedule }> {
+  return post<{ ok: boolean; schedule: TaskSchedule }>("/api/schedules", input);
+}
+
+export async function updateSchedule(
+  id: string,
+  input: Partial<TaskScheduleCreateInput>,
+): Promise<{ ok: boolean; schedule: TaskSchedule }> {
+  return request<{ ok: boolean; schedule: TaskSchedule }>(`/api/schedules/${encodeURIComponent(id)}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+}
+
+export async function deleteSchedule(id: string): Promise<{ ok: boolean; id: string }> {
+  return del<{ ok: boolean; id: string }>(`/api/schedules/${encodeURIComponent(id)}`);
+}
+
+export async function triggerSchedule(id: string): Promise<{ ok: boolean }> {
+  return post<{ ok: boolean }>(`/api/schedules/${encodeURIComponent(id)}/trigger`);
 }
 
 export async function previewWorkflowRoute(input: {
