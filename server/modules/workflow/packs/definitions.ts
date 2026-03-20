@@ -5,6 +5,7 @@ export const BUILTIN_PACK_KEYS = [
   "video_preprod",
   "web_research_report",
   "roleplay",
+  "facility_visit",
 ] as const;
 export type BuiltinPackKey = (typeof BUILTIN_PACK_KEYS)[number];
 
@@ -199,4 +200,69 @@ export const DEFAULT_WORKFLOW_PACK_SEEDS: WorkflowPackSeed[] = [
       defaultReasoning: "low",
     },
   },
+  {
+    key: "facility_visit",
+    name: "Facility Visit Prep",
+    inputSchema: {
+      required: ["facility", "visit_date", "purpose"],
+      optional: ["prior_visit_path", "contract_ids", "technical_issues", "contacts_override"],
+    },
+    promptPreset: {
+      mode: "analysis",
+      systemPrompt:
+        "You are preparing a comprehensive facility visit briefing document for a Siemens Healthineers MRI collaboration manager visiting {{facility}} on {{visit_date}}.\n\nVisit Purpose: {{purpose}}\n{{#prior_visit_path}}Prior Visit Notes: {{prior_visit_path}}{{/prior_visit_path}}\n{{#technical_issues}}Technical Issues to Address: {{technical_issues}}{{/technical_issues}}\n\nPrepare a structured briefing document with these required sections:\n1. Basic facility information and visit logistics\n2. Key contacts table (name, role, email)\n3. Pre-visit checklist (actionable items)\n4. Agenda (priority-ordered P0-P3, with time estimates)\n5. Technical context (relevant MRI protocols, WIP status, recent issues)\n6. Contract status table (contract IDs, signature chain, risk level)\n7. Follow-up action template\n\nRead available context from the project directory to populate these sections. Be specific and actionable.",
+      includeProjectFiles: true,
+      maxContextFiles: 10,
+    },
+    qaRules: {
+      requiredSections: ["contacts", "checklist", "agenda", "contract", "followup"],
+      failOnMissingSections: true,
+      rules: [
+        "All checklist items must begin with an action verb",
+        "Agenda must have at least one P0 item",
+        "Contract table must reference at least one contract ID",
+        "Follow-up section must have at least one actionable item",
+      ],
+    },
+    outputTemplate: {
+      filename: "{{YYMMDD}}_visit_prep_{{facility}}.md",
+      sections: [
+        "header",
+        "facility_info",
+        "contacts",
+        "pre_visit_checklist",
+        "agenda",
+        "technical_context",
+        "contract_status",
+        "decision_flow",
+        "followup_template",
+      ],
+    },
+    routingKeywords: [
+      "visit prep",
+      "訪問準備",
+      "施設訪問",
+      "visit briefing",
+      "pre-visit",
+      "出張準備",
+      "facility visit",
+      "訪問前確認",
+    ],
+    costProfile: {
+      maxInputTokens: 20000,
+      maxOutputTokens: 12000,
+      maxRounds: 4,
+      defaultReasoning: "high",
+    },
+  },
 ];
+
+export interface FacilityVisitPackInput {
+  facility: string;
+  visit_date: string; // YYYY-MM-DD
+  purpose: string;
+  prior_visit_path?: string;
+  contract_ids?: string;
+  technical_issues?: string;
+  contacts_override?: string;
+}

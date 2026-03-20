@@ -49,6 +49,7 @@ export interface TaskCreateInput {
   workflow_meta_json: string | null;
   output_format: string | null;
   base_branch: string | null;
+  chain_to_task_id: string | null;
 }
 
 /**
@@ -142,6 +143,7 @@ export function validateTaskCreateBody(
       workflow_meta_json: workflowMetaJson,
       output_format: truncateField(b.output_format, LIMITS.outputFormat),
       base_branch: truncateField(b.base_branch, LIMITS.baseBranch),
+      chain_to_task_id: normalizeTextField(b.chain_to_task_id),
     },
   };
 }

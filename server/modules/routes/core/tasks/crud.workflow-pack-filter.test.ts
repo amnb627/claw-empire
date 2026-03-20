@@ -49,6 +49,7 @@ function createTaskCrudHarness(): { db: DatabaseSync; routes: Map<string, RouteH
       completed_at INTEGER,
       source_task_id TEXT,
       hidden INTEGER NOT NULL DEFAULT 0,
+      chain_to_task_id TEXT,
       created_at INTEGER NOT NULL,
       updated_at INTEGER NOT NULL
     );

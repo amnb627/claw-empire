@@ -103,7 +103,8 @@ CREATE TABLE IF NOT EXISTS tasks (
   started_at INTEGER,
   completed_at INTEGER,
   created_at INTEGER DEFAULT (unixepoch()*1000),
-  updated_at INTEGER DEFAULT (unixepoch()*1000)
+  updated_at INTEGER DEFAULT (unixepoch()*1000),
+  chain_to_task_id TEXT REFERENCES tasks(id) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS task_creation_audits (
@@ -364,6 +365,7 @@ CREATE INDEX IF NOT EXISTS idx_skill_learning_history_skill_lookup
 
 CREATE INDEX IF NOT EXISTS idx_tasks_project ON tasks(project_id);
 CREATE INDEX IF NOT EXISTS idx_tasks_workflow_pack ON tasks(workflow_pack_key);
+CREATE INDEX IF NOT EXISTS idx_tasks_chain ON tasks(chain_to_task_id);
 CREATE INDEX IF NOT EXISTS idx_subtasks_task_status ON subtasks(task_id, status);
 CREATE INDEX IF NOT EXISTS idx_agents_status ON agents(status, department_id);
 

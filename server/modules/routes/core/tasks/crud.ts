@@ -226,14 +226,17 @@ export function registerTaskCrudRoutes(deps: TaskCrudRouteDeps): void {
       }
     }
 
+    // Tasks with chain_to_task_id are waiting for the source task: force status to 'pending'
+    const resolvedStatus = body.chain_to_task_id ? "pending" : body.status;
+
     db.prepare(
       `
     INSERT INTO tasks (
       id, title, description, department_id, assigned_agent_id, project_id,
       status, priority, task_type, workflow_pack_key, workflow_meta_json, output_format,
-      project_path, base_branch, created_at, updated_at
+      project_path, base_branch, chain_to_task_id, created_at, updated_at
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `,
     ).run(
       id,
@@ -242,7 +245,7 @@ export function registerTaskCrudRoutes(deps: TaskCrudRouteDeps): void {
       body.department_id,
       body.assigned_agent_id,
       resolvedProjectId,
-      body.status,
+      resolvedStatus,
       body.priority,
       body.task_type,
       resolveWorkflowPackKeyForTask({
@@ -254,6 +257,7 @@ export function registerTaskCrudRoutes(deps: TaskCrudRouteDeps): void {
       body.output_format,
       resolvedProjectPath,
       body.base_branch,
+      body.chain_to_task_id,
       t,
       t,
     );

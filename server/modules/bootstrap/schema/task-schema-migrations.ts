@@ -139,6 +139,18 @@ export function applyTaskSchemaMigrations(db: DbLike): void {
   repairLegacyTaskForeignKeys(db);
   ensureMessagesIdempotencySchema(db);
 
+  // Linear task chaining: chain_to_task_id links a pending task to its predecessor
+  try {
+    db.exec("ALTER TABLE tasks ADD COLUMN chain_to_task_id TEXT");
+  } catch {
+    /* already exists */
+  }
+  try {
+    db.exec("CREATE INDEX IF NOT EXISTS idx_tasks_chain ON tasks(chain_to_task_id)");
+  } catch {
+    /* column may not exist in minimal test schemas */
+  }
+
   // Indexes on migration-added columns (safe: IF NOT EXISTS)
   try {
     db.exec("CREATE INDEX IF NOT EXISTS idx_tasks_source_task ON tasks(source_task_id)");

@@ -265,7 +265,7 @@ export async function deleteCustomSkill(skillName: string): Promise<{ ok: boolea
 }
 
 export interface WorkflowPackConfig {
-  key: WorkflowPackKey;
+  key: string; // builtin WorkflowPackKey or custom string key
   name: string;
   enabled: boolean;
   input_schema: unknown;
@@ -291,13 +291,29 @@ export async function getWorkflowPacks(): Promise<{ packs: WorkflowPackConfig[];
 }
 
 export async function updateWorkflowPack(
-  key: WorkflowPackKey,
+  key: string,
   input: Partial<Omit<WorkflowPackConfig, "key" | "created_at" | "updated_at">>,
 ): Promise<{ ok: boolean; pack: WorkflowPackConfig }> {
   return request<{ ok: boolean; pack: WorkflowPackConfig }>(`/api/workflow-packs/${encodeURIComponent(key)}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
+  });
+}
+
+export async function createWorkflowPack(
+  input: { key: string; name: string } & Partial<Omit<WorkflowPackConfig, "key" | "name" | "created_at" | "updated_at">>,
+): Promise<{ ok: boolean; pack: WorkflowPackConfig }> {
+  return request<{ ok: boolean; pack: WorkflowPackConfig }>("/api/workflow-packs", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+}
+
+export async function deleteWorkflowPack(key: string): Promise<{ ok: boolean; key: string }> {
+  return request<{ ok: boolean; key: string }>(`/api/workflow-packs/${encodeURIComponent(key)}`, {
+    method: "DELETE",
   });
 }
 

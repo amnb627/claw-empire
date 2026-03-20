@@ -7,10 +7,53 @@ import {
 } from "../packs/video-artifact.ts";
 import { evaluateRemotionOnlyGateFromLogFiles } from "../packs/video-render-engine-gate.ts";
 import { calculateXp, countAgentStreak, countSubtasks } from "./xp-calculator.ts";
+import type { ChildProcess } from "node:child_process";
+import type { DatabaseSync } from "node:sqlite";
 
-type CreateRunCompleteHandlerDeps = Record<string, any>;
+export interface RunCompleteHandlerDeps {
+  activeProcesses: Map<string, ChildProcess | { pid?: number; kill?: () => void }>;
+  stopProgressTimer(taskId: string): void;
+  db: DatabaseSync;
+  stopRequestedTasks: Set<string>;
+  stopRequestModeByTask: Map<string, "pause" | "cancel">;
+  appendTaskLog(taskId: string, kind: string, message: string): void;
+  clearTaskWorkflowState(taskId: string): void;
+  codexThreadToSubtask: Map<string, string>;
+  nowMs(): number;
+  logsDir: string;
+  broadcast(type: string, payload: unknown): void;
+  processSubtaskDelegations(taskId: string): void;
+  taskWorktrees: Map<string, { worktreePath?: string; branchName?: string; projectPath?: string }>;
+  cleanupWorktree(projectPath: string, taskId: string): void;
+  findTeamLeader(departmentId: string | null): unknown;
+  getAgentDisplayName(agent: unknown, lang: string): string;
+  pickL(pool: unknown, lang: string): string;
+  l(ko: string[], en: string[], ja?: string[], zh?: string[]): { ko: string[]; en: string[]; ja: string[]; zh: string[] };
+  notifyCeo(message: string, taskId: string): void;
+  sendAgentMessage(agent: unknown, content: string, messageType: string, receiverType: string, receiverId: string | null, taskId: string): void;
+  resolveLang(text: string): string;
+  formatTaskSubtaskProgressSummary(taskId: string, lang: string): string;
+  crossDeptNextCallbacks: Map<string, () => void>;
+  recoverCrossDeptQueueAfterMissingCallback(taskId: string): void;
+  subtaskDelegationCallbacks: Map<string, () => void>;
+  finishReview(taskId: string, taskTitle: string): void;
+  reconcileDelegatedSubtasksAfterRun(taskId: string, exitCode: number): void;
+  completeTaskWithoutReview(task: { id: string; title: string; description: string | null; department_id: string | null; source_task_id: string | null; assigned_agent_id: string | null }, logMessage: string): void;
+  isReportDesignCheckpointTask(task: { task_type?: string | null; description?: string | null } | null | undefined): boolean;
+  extractReportDesignParentTaskId(task: { description?: string | null } | null | undefined): string | null;
+  resumeReportAfterDesignCheckpoint(parentTaskId: string, checkpointTaskId: string): void;
+  isPresentationReportTask(task: { task_type?: string | null; description?: string | null } | null | undefined): boolean;
+  readReportFlowValue(description: string | null | undefined, key: string): string | null;
+  startReportDesignCheckpoint(task: { id: string; title: string; description: string | null; project_id: string | null; project_path: string | null; assigned_agent_id: string | null }): boolean;
+  upsertReportFlowValue(description: string | null | undefined, key: string, value: string): string;
+  isReportRequestTask(task: { task_type?: string | null; description?: string | null } | null | undefined): boolean;
+  notifyTaskStatus(taskId: string, taskTitle: string, status: string, lang: string): void;
+  prettyStreamJson(raw: string): string;
+  getWorktreeDiffSummary(projectPath: string, taskId: string): string;
+  hasVisibleDiffSummary(summary: string): boolean;
+}
 
-export function createRunCompleteHandler(deps: CreateRunCompleteHandlerDeps) {
+export function createRunCompleteHandler(deps: RunCompleteHandlerDeps) {
   const {
     activeProcesses,
     stopProgressTimer,
@@ -53,6 +96,51 @@ export function createRunCompleteHandler(deps: CreateRunCompleteHandlerDeps) {
     getWorktreeDiffSummary,
     hasVisibleDiffSummary,
   } = deps;
+
+
+  /**
+   * Check if a pending task is chained to the just-completed task,
+   * and if so promote it from 'pending' -> 'planned' with enriched description.
+   */
+  function triggerChainIfNeeded(completedTaskId: string): void {
+    const chainedTask = db
+      .prepare(
+        `SELECT id, title, description, workflow_pack_key
+         FROM tasks
+         WHERE chain_to_task_id = ? AND status = 'pending'`,
+      )
+      .get(completedTaskId) as
+      | { id: string; title: string; description: string | null; workflow_pack_key: string }
+      | undefined;
+
+    if (!chainedTask) return;
+
+    const completedResult = db
+      .prepare("SELECT result, title FROM tasks WHERE id = ?")
+      .get(completedTaskId) as { result: string | null; title: string } | undefined;
+
+    const chainContext = completedResult?.result
+      ? `
+
+---
+**Chained from**: "${completedResult.title}"
+**Previous output summary**:
+${completedResult.result.slice(0, 2000)}`
+      : `
+
+---
+**Chained from**: "${completedResult?.title ?? completedTaskId}" (completed)`;
+
+    const enrichedDescription = (chainedTask.description || "") + chainContext;
+
+    db.prepare(
+      `UPDATE tasks SET status = 'planned', description = ?, updated_at = ? WHERE id = ?`,
+    ).run(enrichedDescription, nowMs(), chainedTask.id);
+
+    broadcast("task_update", { id: chainedTask.id, status: "planned" });
+
+    console.log(`[Chain] Task ${chainedTask.id} unblocked from completed task ${completedTaskId}`);
+  }
 
   function handleTaskRunComplete(taskId: string, exitCode: number): void {
     activeProcesses.delete(taskId);
@@ -445,6 +533,7 @@ export function createRunCompleteHandler(deps: CreateRunCompleteHandlerDeps) {
           },
           "Status → done (report design checkpoint completed; review meeting skipped)",
         );
+        triggerChainIfNeeded(taskId);
         if (parentTaskId) {
           resumeReportAfterDesignCheckpoint(parentTaskId, taskId);
         }
@@ -486,6 +575,7 @@ export function createRunCompleteHandler(deps: CreateRunCompleteHandlerDeps) {
           },
           "Status → done (report workflow: final PPT regenerated; second design confirmation skipped)",
         );
+        triggerChainIfNeeded(taskId);
         return;
       }
 
@@ -501,6 +591,7 @@ export function createRunCompleteHandler(deps: CreateRunCompleteHandlerDeps) {
           },
           "Status → done (report workflow: review meeting skipped for documentation/report task)",
         );
+        triggerChainIfNeeded(taskId);
         return;
       }
     }
@@ -588,6 +679,7 @@ export function createRunCompleteHandler(deps: CreateRunCompleteHandlerDeps) {
         if (!leader) {
           // No team leader — auto-approve
           finishReview(taskId, task.title);
+          triggerChainIfNeeded(taskId);
           return;
         }
 
@@ -668,6 +760,7 @@ export function createRunCompleteHandler(deps: CreateRunCompleteHandlerDeps) {
         // After another 2-3s: team leader approves → move to done
         setTimeout(() => {
           finishReview(taskId, task.title);
+          triggerChainIfNeeded(taskId);
         }, 2500);
       }, 2500);
     } else {

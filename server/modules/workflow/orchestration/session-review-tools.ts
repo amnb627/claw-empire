@@ -1,4 +1,5 @@
 import type { Lang } from "../../../types/lang.ts";
+import { deleteCliOutputRateState } from "../../../ws/hub.ts";
 
 type CreateSessionReviewToolsDeps = Record<string, any>;
 
@@ -80,6 +81,7 @@ export function createSessionReviewTools(deps: CreateSessionReviewToolsDeps) {
 
   function clearTaskWorkflowState(taskId: string): void {
     clearCliOutputDedup(taskId);
+    deleteCliOutputRateState(taskId);
     crossDeptNextCallbacks.delete(taskId);
     subtaskDelegationCallbacks.delete(taskId);
     subtaskDelegationDispatchInFlight.delete(taskId);
