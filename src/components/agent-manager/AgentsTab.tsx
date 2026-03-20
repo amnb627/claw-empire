@@ -133,10 +133,22 @@ export default function AgentsTab({
       </div>
 
       {sortedAgents.length === 0 ? (
-        <div className="text-center py-16" style={{ color: "var(--th-text-muted)" }}>
-          <div className="text-3xl mb-2">🔍</div>
-          {tr("검색 결과 없음", "No agents found")}
-        </div>
+        agents.length === 0 && !search && deptTab === "all" ? (
+          <div className="text-center py-16" style={{ color: "var(--th-text-muted)" }}>
+            <div className="text-5xl mb-3">🏢</div>
+            <div className="text-base font-semibold mb-1" style={{ color: "var(--th-text-heading)" }}>
+              {tr("아직 에이전트가 없습니다", "No agents yet")}
+            </div>
+            <div className="text-sm mb-4">
+              {tr("+ 에이전트 추가 버튼으로 첫 번째 에이전트를 고용하세요", "Hire your first agent using the + Add Agent button above")}
+            </div>
+          </div>
+        ) : (
+          <div className="text-center py-16" style={{ color: "var(--th-text-muted)" }}>
+            <div className="text-3xl mb-2">🔍</div>
+            {tr("검색 결과 없음", "No agents found")}
+          </div>
+        )
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {sortedAgents.map((agent) => (

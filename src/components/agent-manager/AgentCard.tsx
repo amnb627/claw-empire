@@ -79,18 +79,44 @@ export default function AgentCard({
         </div>
       </div>
 
+      {(agent.stats_tasks_done > 0 || agent.stats_xp > 0) && (
+        <div className="mt-2.5 flex items-center gap-2">
+          <span className="text-[10px] font-bold text-yellow-400">
+            Lv.{Math.floor(agent.stats_xp / 100) + 1}
+          </span>
+          <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: "var(--th-bg-surface)" }}>
+            <div
+              className="h-full bg-gradient-to-r from-yellow-500 to-amber-400 rounded-full"
+              style={{ width: `${agent.stats_xp % 100}%` }}
+            />
+          </div>
+          <span className="text-[10px] shrink-0" style={{ color: "var(--th-text-muted)" }}>
+            ✅ {agent.stats_tasks_done}
+          </span>
+        </div>
+      )}
+
       <div
         className="flex items-center justify-between mt-3 pt-2.5"
         style={{ borderTop: "1px solid var(--th-card-border)" }}
       >
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 min-w-0">
           <span
-            className="text-[10px] font-mono px-1.5 py-0.5 rounded"
+            className="text-[10px] font-mono px-1.5 py-0.5 rounded shrink-0"
             style={{ background: "var(--th-bg-surface)", color: "var(--th-text-muted)" }}
           >
             {agent.cli_provider}
           </span>
-          {agent.personality && (
+          {agent.cli_model && (
+            <span
+              className="text-[10px] font-mono truncate max-w-[110px] shrink-0"
+              style={{ color: "var(--th-text-muted)" }}
+              title={agent.cli_model}
+            >
+              {agent.cli_model}
+            </span>
+          )}
+          {agent.personality && !agent.cli_model && (
             <span
               className="text-[10px] truncate max-w-[120px]"
               style={{ color: "var(--th-text-muted)" }}
