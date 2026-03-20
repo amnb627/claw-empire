@@ -1,14 +1,18 @@
 export const DEFERRED_RUNTIME_FN_TAG = Symbol.for("climpire.deferredRuntimeFnName");
 
-type RuntimeRecord = Record<string, any>;
+// Represents a function with an unknown call signature — intentionally broad
+// so that deferred proxies can forward calls without knowing the concrete type.
+type AnyFn = (...args: unknown[]) => unknown;
 
-export function createDeferredRuntimeFunction(runtime: RuntimeRecord, name: string): (...args: any[]) => any {
-  const deferred = (...args: any[]) => {
+type RuntimeRecord = Record<string, unknown>;
+
+export function createDeferredRuntimeFunction(runtime: RuntimeRecord, name: string): AnyFn {
+  const deferred: AnyFn = (...args: unknown[]) => {
     const current = runtime[name];
     if (typeof current !== "function" || current === deferred) {
       throw new Error(`${name}_not_initialized`);
     }
-    return current(...args);
+    return (current as AnyFn)(...args);
   };
 
   Object.defineProperty(deferred, DEFERRED_RUNTIME_FN_TAG, {
@@ -21,7 +25,7 @@ export function createDeferredRuntimeFunction(runtime: RuntimeRecord, name: stri
   return deferred;
 }
 
-export function isDeferredRuntimeFunction(value: unknown): value is (...args: any[]) => any {
+export function isDeferredRuntimeFunction(value: unknown): value is AnyFn {
   return typeof value === "function" && Object.prototype.hasOwnProperty.call(value, DEFERRED_RUNTIME_FN_TAG);
 }
 
