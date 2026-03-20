@@ -42,6 +42,7 @@ import { applyTaskSchemaMigrations } from "./modules/bootstrap/schema/task-schem
 import { applyDefaultSeeds } from "./modules/bootstrap/schema/seeds.ts";
 import { reconcileOrphanedProcesses } from "./modules/workflow/agents/process-recovery.ts";
 import { initPackRegistry } from "./modules/workflow/packs/definitions.ts";
+import { pruneStaleClimpireBranches } from "./modules/workflow/core/worktree/branch-pruner.ts";
 
 export type { TaskCreationAuditInput } from "./modules/bootstrap/security-audit.ts";
 
@@ -135,5 +136,17 @@ assertRuntimeFunctionsResolved(runtimeContext, ROUTE_RUNTIME_HELPER_KEYS, "route
 reconcileOrphanedProcesses(db).catch((err) => {
   console.error('[ProcessRecovery] Error during orphan reconciliation:', err);
 });
+
+// On startup, prune stale climpire/* branches for all known projects
+{
+  const _projectRows = db
+    .prepare('SELECT DISTINCT project_path FROM projects WHERE project_path IS NOT NULL')
+    .all() as { project_path: string }[];
+  for (const { project_path } of _projectRows) {
+    pruneStaleClimpireBranches(db, project_path).catch(() => {
+      /* non-fatal: branch pruning should not block server startup */
+    });
+  }
+}
 
 startLifecycle(runtimeContext as RuntimeContext);
