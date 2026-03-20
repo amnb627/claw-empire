@@ -2,11 +2,20 @@ import type { RuntimeContext } from "../../../types/runtime-context.ts";
 import type { SQLInputValue } from "node:sqlite";
 import { resolveSessionWorkflowPackFromDb } from "../../../messenger/session-agent-routing.ts";
 import {
+  BUILTIN_PACK_KEYS,
   DEFAULT_WORKFLOW_PACK_KEY,
   DEFAULT_WORKFLOW_PACK_SEEDS,
   isWorkflowPackKey,
   type WorkflowPackKey,
 } from "../../workflow/packs/definitions.ts";
+
+const BUILTIN_PACK_SET = new Set<string>(BUILTIN_PACK_KEYS);
+
+function isValidPackKeyFormat(value: unknown): value is string {
+  if (typeof value !== "string") return false;
+  const trimmed = value.trim();
+  return trimmed.length >= 1 && trimmed.length <= 64 && /^[a-z][a-z0-9_]*$/.test(trimmed);
+}
 
 type WorkflowPackRow = {
   key: string;
@@ -158,9 +167,102 @@ export function registerWorkflowPackRoutes(
     return res.json({ packs });
   });
 
+  // POST /api/workflow-packs — create a new custom pack
+  app.post("/api/workflow-packs", (req, res) => {
+    const body = (req.body ?? {}) as Record<string, unknown>;
+    const packKey = normalizeTextField(body.key);
+    if (!packKey || !isValidPackKeyFormat(packKey)) {
+      return res.status(400).json({ error: "invalid_pack_key" });
+    }
+    if (BUILTIN_PACK_SET.has(packKey)) {
+      return res.status(400).json({ error: "builtin_pack_key_reserved" });
+    }
+    const name = normalizeTextField(body.name);
+    if (!name) return res.status(400).json({ error: "name_required" });
+
+    const existing = db.prepare("SELECT key FROM workflow_packs WHERE key = ?").get(packKey) as
+      | { key: string }
+      | undefined;
+    if (existing) return res.status(409).json({ error: "pack_key_conflict" });
+
+    const enabled = body.enabled === false || body.enabled === 0 || String(body.enabled) === "0" ? 0 : 1;
+
+    const defaultJson = JSON.stringify({});
+    const defaultKeywordsJson = JSON.stringify([]);
+
+    const jsonFields: Record<string, string> = {
+      input_schema_json: defaultJson,
+      prompt_preset_json: defaultJson,
+      qa_rules_json: defaultJson,
+      output_template_json: defaultJson,
+      routing_keywords_json: defaultKeywordsJson,
+      cost_profile_json: defaultJson,
+    };
+
+    const jsonFieldSpecs: Array<{ dbField: string; aliases: string[] }> = [
+      { dbField: "input_schema_json", aliases: ["input_schema", "inputSchema", "input_schema_json"] },
+      { dbField: "prompt_preset_json", aliases: ["prompt_preset", "promptPreset", "prompt_preset_json"] },
+      { dbField: "qa_rules_json", aliases: ["qa_rules", "qaRules", "qa_rules_json"] },
+      { dbField: "output_template_json", aliases: ["output_template", "outputTemplate", "output_template_json"] },
+      { dbField: "routing_keywords_json", aliases: ["routing_keywords", "routingKeywords", "routing_keywords_json"] },
+      { dbField: "cost_profile_json", aliases: ["cost_profile", "costProfile", "cost_profile_json"] },
+    ];
+
+    for (const spec of jsonFieldSpecs) {
+      const alias = spec.aliases.find((candidate) => candidate in body);
+      if (!alias) continue;
+      const normalized = normalizeJsonStorageInput(body[alias]);
+      if (!normalized.ok) {
+        return res.status(400).json({ error: "invalid_json_field", field: alias, reason: normalized.error });
+      }
+      jsonFields[spec.dbField] = normalized.json;
+    }
+
+    const now = nowMs();
+    db.prepare(
+      `INSERT INTO workflow_packs (key, name, enabled, input_schema_json, prompt_preset_json, qa_rules_json, output_template_json, routing_keywords_json, cost_profile_json, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ).run(
+      packKey,
+      name,
+      enabled,
+      jsonFields.input_schema_json,
+      jsonFields.prompt_preset_json,
+      jsonFields.qa_rules_json,
+      jsonFields.output_template_json,
+      jsonFields.routing_keywords_json,
+      jsonFields.cost_profile_json,
+      now,
+      now,
+    );
+
+    const row = db.prepare("SELECT * FROM workflow_packs WHERE key = ?").get(packKey) as WorkflowPackRow | undefined;
+    if (!row) return res.status(500).json({ error: "pack_reload_failed" });
+
+    return res.status(201).json({
+      ok: true,
+      pack: {
+        key: row.key,
+        name: row.name,
+        enabled: row.enabled !== 0,
+        input_schema: parseStoredJson(row.input_schema_json),
+        prompt_preset: parseStoredJson(row.prompt_preset_json),
+        qa_rules: parseStoredJson(row.qa_rules_json),
+        output_template: parseStoredJson(row.output_template_json),
+        routing_keywords: parseStoredJson(row.routing_keywords_json),
+        cost_profile: parseStoredJson(row.cost_profile_json),
+        created_at: row.created_at,
+        updated_at: row.updated_at,
+      },
+    });
+  });
+
   app.put("/api/workflow-packs/:key", (req, res) => {
     const packKey = String(req.params.key || "").trim();
-    if (!isWorkflowPackKey(packKey)) return res.status(400).json({ error: "invalid_pack_key" });
+    // Accept both builtin and custom (valid-format) keys for updates
+    const isBuiltin = isWorkflowPackKey(packKey);
+    const isCustom = !isBuiltin && isValidPackKeyFormat(packKey);
+    if (!isBuiltin && !isCustom) return res.status(400).json({ error: "invalid_pack_key" });
 
     const existing = db.prepare("SELECT key FROM workflow_packs WHERE key = ?").get(packKey) as
       | { key: string }
@@ -227,6 +329,24 @@ export function registerWorkflowPackRoutes(
         updated_at: row.updated_at,
       },
     });
+  });
+
+  // DELETE /api/workflow-packs/:key — remove a custom pack (builtin packs are protected)
+  app.delete("/api/workflow-packs/:key", (req, res) => {
+    const packKey = String(req.params.key || "").trim();
+    if (BUILTIN_PACK_SET.has(packKey)) {
+      return res.status(403).json({ error: "builtin_pack_protected" });
+    }
+    if (!isValidPackKeyFormat(packKey)) {
+      return res.status(400).json({ error: "invalid_pack_key" });
+    }
+    const existing = db.prepare("SELECT key FROM workflow_packs WHERE key = ?").get(packKey) as
+      | { key: string }
+      | undefined;
+    if (!existing) return res.status(404).json({ error: "pack_not_found" });
+
+    db.prepare("DELETE FROM workflow_packs WHERE key = ?").run(packKey);
+    return res.json({ ok: true, key: packKey });
   });
 
   app.post("/api/workflow/route", (req, res) => {
