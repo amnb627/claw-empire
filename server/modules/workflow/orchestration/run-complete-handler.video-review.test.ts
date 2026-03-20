@@ -48,6 +48,15 @@ function createDb(): DatabaseSync {
       stats_tasks_done INTEGER DEFAULT 0,
       stats_xp INTEGER DEFAULT 0
     );
+
+    CREATE TABLE review_revision_history (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      task_id TEXT NOT NULL,
+      normalized_note TEXT NOT NULL,
+      raw_note TEXT NOT NULL,
+      first_round INTEGER NOT NULL,
+      created_at INTEGER DEFAULT (unixepoch()*1000)
+    );
   `);
   return db;
 }

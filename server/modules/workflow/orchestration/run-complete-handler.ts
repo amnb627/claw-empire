@@ -293,6 +293,10 @@ export function createRunCompleteHandler(deps: CreateRunCompleteHandlerDeps) {
         const agentRow = db.prepare("SELECT role FROM agents WHERE id = ?").get(task.assigned_agent_id) as
           | { role: string }
           | undefined;
+        const revisionCount = db
+          .prepare("SELECT COUNT(*) as count FROM review_revision_history WHERE task_id = ?")
+          .get(taskId) as { count: number } | undefined;
+        const firstPassSuccess = (revisionCount?.count ?? 0) === 0;
         const xpResult = calculateXp({
           priority: (task as any).priority ?? 0,
           taskType: task.task_type,
@@ -300,6 +304,7 @@ export function createRunCompleteHandler(deps: CreateRunCompleteHandlerDeps) {
           subtaskCount: countSubtasks(db, taskId),
           agentRole: agentRow?.role ?? "junior",
           streakCount: countAgentStreak(db, task.assigned_agent_id!),
+          firstPassSuccess,
         });
         db.prepare(
           "UPDATE agents SET stats_tasks_done = stats_tasks_done + 1, stats_xp = stats_xp + ? WHERE id = ?",
@@ -307,7 +312,7 @@ export function createRunCompleteHandler(deps: CreateRunCompleteHandlerDeps) {
         appendTaskLog(
           taskId,
           "system",
-          `XP awarded: ${xpResult.total} (base=${xpResult.base} complexity=${xpResult.complexity} type=${xpResult.type} collab=${xpResult.collaboration} subtask=${xpResult.subtask} streak=${xpResult.streak})`,
+          `XP awarded: ${xpResult.total} (base=${xpResult.base} complexity=${xpResult.complexity} type=${xpResult.type} collab=${xpResult.collaboration} subtask=${xpResult.subtask} streak=${xpResult.streak} firstPass=${xpResult.firstPass})`,
         );
       }
 

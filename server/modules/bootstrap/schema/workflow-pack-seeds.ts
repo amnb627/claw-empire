@@ -20,11 +20,13 @@ export function seedDefaultWorkflowPacks(db: DbLike): void {
   `,
   );
 
+  const DISABLED_BY_DEFAULT = new Set(["roleplay", "novel"]);
+
   for (const pack of DEFAULT_WORKFLOW_PACK_SEEDS) {
     upsert.run(
       pack.key,
       pack.name,
-      1,
+      DISABLED_BY_DEFAULT.has(pack.key) ? 0 : 1,
       JSON.stringify(pack.inputSchema),
       JSON.stringify(pack.promptPreset),
       JSON.stringify(pack.qaRules),

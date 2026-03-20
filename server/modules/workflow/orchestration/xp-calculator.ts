@@ -2,9 +2,9 @@
  * XP Scoring Calculator for Agent Progression
  *
  * Replaces the hardcoded +10 XP with a multi-factor formula:
- *   Total XP = base + complexity + type + collaboration + subtask + streak
+ *   Total XP = base + complexity + type + collaboration + subtask + streak + firstPassBonus
  *
- * Range: 10–60 XP per task (base 10, up to +50 bonuses)
+ * Range: 10–70 XP per task (base 10, up to +60 bonuses)
  */
 
 export interface XpContext {
@@ -20,6 +20,8 @@ export interface XpContext {
   agentRole: string;
   /** Number of recent consecutive successful completions by this agent (0–5+) */
   streakCount: number;
+  /** True if the task completed on the first pass (no review revisions requested) */
+  firstPassSuccess: boolean;
 }
 
 export interface XpBreakdown {
@@ -29,6 +31,7 @@ export interface XpBreakdown {
   collaboration: number;
   subtask: number;
   streak: number;
+  firstPass: number;
   total: number;
 }
 
@@ -64,9 +67,12 @@ export function calculateXp(ctx: XpContext): XpBreakdown {
   // Streak bonus: +5 at 3-streak, +10 at 5-streak
   const streak = ctx.streakCount >= 5 ? 10 : ctx.streakCount >= 3 ? 5 : 0;
 
-  const total = base + complexity + type + collaboration + subtask + streak;
+  // First-pass bonus: +10 if task completed with no review revisions
+  const firstPass = ctx.firstPassSuccess ? 10 : 0;
 
-  return { base, complexity, type, collaboration, subtask, streak, total };
+  const total = base + complexity + type + collaboration + subtask + streak + firstPass;
+
+  return { base, complexity, type, collaboration, subtask, streak, firstPass, total };
 }
 
 /**

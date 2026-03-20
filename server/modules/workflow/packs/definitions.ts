@@ -1,4 +1,4 @@
-export const WORKFLOW_PACK_KEYS = [
+export const BUILTIN_PACK_KEYS = [
   "development",
   "novel",
   "report",
@@ -6,13 +6,28 @@ export const WORKFLOW_PACK_KEYS = [
   "web_research_report",
   "roleplay",
 ] as const;
+export type BuiltinPackKey = (typeof BUILTIN_PACK_KEYS)[number];
 
-export type WorkflowPackKey = (typeof WORKFLOW_PACK_KEYS)[number];
+// Keep old export for backwards compat
+export const WORKFLOW_PACK_KEYS = BUILTIN_PACK_KEYS;
+export type WorkflowPackKey = BuiltinPackKey;
 
 export const DEFAULT_WORKFLOW_PACK_KEY: WorkflowPackKey = "development";
 
+// Runtime registry populated from DB (includes builtins + user-defined packs)
+let _knownPackKeys: Set<string> = new Set(BUILTIN_PACK_KEYS);
+
+export function initPackRegistry(packKeys: string[]): void {
+  _knownPackKeys = new Set([...BUILTIN_PACK_KEYS, ...packKeys]);
+}
+
+export function isKnownPackKey(value: unknown): value is string {
+  return typeof value === "string" && _knownPackKeys.has(value);
+}
+
+// Keep for backwards compat (only matches compile-time builtins)
 export function isWorkflowPackKey(value: unknown): value is WorkflowPackKey {
-  return typeof value === "string" && (WORKFLOW_PACK_KEYS as readonly string[]).includes(value);
+  return typeof value === "string" && (BUILTIN_PACK_KEYS as readonly string[]).includes(value);
 }
 
 export type WorkflowPackSeed = {

@@ -9,6 +9,7 @@ function ctx(overrides: Partial<XpContext> = {}): XpContext {
     subtaskCount: 0,
     agentRole: "junior",
     streakCount: 0,
+    firstPassSuccess: false,
     ...overrides,
   };
 }
@@ -89,10 +90,11 @@ describe("calculateXp", () => {
       sourceTaskId: "parent-1",
       subtaskCount: 5,
       streakCount: 5,
+      firstPassSuccess: true,
     });
     const result = calculateXp(maxCtx);
-    // 10 + 20 + 5 + 5 + 10 + 10 = 60
-    expect(result.total).toBe(60);
+    // 10 + 20 + 5 + 5 + 10 + 10 + 10 = 70
+    expect(result.total).toBe(70);
   });
 
   it("returns correct breakdown structure", () => {
@@ -112,8 +114,30 @@ describe("calculateXp", () => {
       collaboration: 5,
       subtask: 4,
       streak: 5,
+      firstPass: 0,
       total: 31,
     });
+  });
+
+  it("adds first-pass bonus of +10 when firstPassSuccess is true", () => {
+    const withFirst = calculateXp(ctx({ firstPassSuccess: true }));
+    const withoutFirst = calculateXp(ctx({ firstPassSuccess: false }));
+    expect(withFirst.firstPass).toBe(10);
+    expect(withoutFirst.firstPass).toBe(0);
+    expect(withFirst.total - withoutFirst.total).toBe(10);
+  });
+
+  it("first-pass bonus applies on top of all other bonuses", () => {
+    const result = calculateXp(
+      ctx({
+        priority: 5,
+        taskType: "development",
+        firstPassSuccess: true,
+      }),
+    );
+    // base(10) + complexity(10) + type(5) + firstPass(10) = 35
+    expect(result.total).toBe(35);
+    expect(result.firstPass).toBe(10);
   });
 });
 

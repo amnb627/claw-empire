@@ -5,7 +5,7 @@ import { randomUUID } from "node:crypto";
 import type { SQLInputValue } from "node:sqlite";
 import type { RuntimeContext } from "../../../../types/runtime-context.ts";
 import type { MeetingMinuteEntryRow, MeetingMinutesRow } from "../../shared/types.ts";
-import { isWorkflowPackKey } from "../../../workflow/packs/definitions.ts";
+import { isKnownPackKey, DEFAULT_WORKFLOW_PACK_KEY } from "../../../workflow/packs/definitions.ts";
 import { resolveWorkflowPackKeyForTask } from "../../../workflow/packs/task-pack-resolver.ts";
 import { validateTaskCreateBody } from "./validation.ts";
 
@@ -78,7 +78,7 @@ export function registerTaskCrudRoutes(deps: TaskCrudRouteDeps): void {
     const projectFilter = firstQueryValue(req.query.project_id);
     const workflowPackFilter = normalizeTextField(firstQueryValue(req.query.workflow_pack_key));
 
-    if (workflowPackFilter && !isWorkflowPackKey(workflowPackFilter)) {
+    if (workflowPackFilter && !isKnownPackKey(workflowPackFilter)) {
       return res.status(400).json({ error: "invalid_workflow_pack_key" });
     }
 
@@ -406,10 +406,10 @@ export function registerTaskCrudRoutes(deps: TaskCrudRouteDeps): void {
     const body = { ...(req.body ?? {}) } as Record<string, unknown>;
     if ("workflow_pack_key" in body) {
       const workflowPackKey = normalizeTextField(body.workflow_pack_key);
-      if (!workflowPackKey || !isWorkflowPackKey(workflowPackKey)) {
-        return res.status(400).json({ error: "invalid_workflow_pack_key" });
-      }
-      body.workflow_pack_key = workflowPackKey;
+      // Unknown pack keys fall back to "development" instead of rejecting
+      body.workflow_pack_key = workflowPackKey && isKnownPackKey(workflowPackKey)
+        ? workflowPackKey
+        : DEFAULT_WORKFLOW_PACK_KEY;
     }
     if ("workflow_meta_json" in body) {
       const rawWorkflowMeta = body.workflow_meta_json;
