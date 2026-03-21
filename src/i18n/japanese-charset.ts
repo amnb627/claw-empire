@@ -24,13 +24,15 @@ export const JapaneseCharsetTestSet = {
   katakanaHalfWidth: "ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜｦﾝｧｨｩｪｫｬｭｮｯｰ｡｢｣",
 
   /** 全角英数字 */
-  fullWidthAlphanumeric: "０１２３４５６７８９ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚ",
+  fullWidthAlphanumeric:
+    "０１２３４５６７８９ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚ",
 
   /** 全角記号 */
   fullWidthSymbols: "！＂＃＄％＆＇（）＊＋，－．／：；＜＝＞？＠［＼］＾＿｀｛｜｝～",
 
   /** 日本語用記号 */
-  japanesePunctuation: "、。・：；？！゛゜´｀¨＾￣＿ヽヾゝゞ〃仝々〆〇ー―‐／＼～∥｜…‥‘’“”（）〔〕［］｛｝〈〉《》「」『』【】",
+  japanesePunctuation:
+    "、。・：；？！゛゜´｀¨＾￣＿ヽヾゝゞ〃仝々〆〇ー―‐／＼～∥｜…‥‘’“”（）〔〕［］｛｝〈〉《》「」『』【】",
 
   /** 基本漢字（常用漢字の一部） */
   basicKanji: "日本語東京大阪京都北海道沖縄漢字試験文字化け対策本日晴れ",
@@ -42,7 +44,8 @@ export const JapaneseCharsetTestSet = {
   personalNameKanji: "澁谷那須与一蓮薰渾神楓渥美鵠埼茨栃奈岡阜墟熊滋滋",
 
   /** 絵文字（基本） */
-  emojiBasic: "😀😃😄😁😆😅🤣😂🙂🙃😉😊😇🥰😍🤩😘😗☺😚😙🥲😋😛😜🤪😝🤑🤗🤭🤫🤔🤐🤨😐😑😶😏😒🙄😬🤥😌😔😪🤤😴😷🤒🤕🤢🤮🤧🥵🥶🥴😵🤯",
+  emojiBasic:
+    "😀😃😄😁😆😅🤣😂🙂🙃😉😊😇🥰😍🤩😘😗☺😚😙🥲😋😛😜🤪😝🤑🤗🤭🤫🤔🤐🤨😐😑😶😏😒🙄😬🤥😌😔😪🤤😴😷🤒🤕🤢🤮🤧🥵🥶🥴😵🤯",
 
   /** 絵文字（シンボル・国旗） */
   emojiSymbols: "🏳️🏴🏴‍☠️🏁🚩🏳️‍🌈🏳️‍⚧️🇯🇵🇺🇸🇬🇧🇨🇳🇰🇷🇩🇪🇫🇷",
@@ -57,16 +60,19 @@ export const JapaneseCharsetTestSet = {
   emojiNature: "☀️🌤️⛅️🌥️☁️🌦️🌧️⛈️🌩️🌨️❄️☃️⛄️🌬️💨🌪️🌫️🌈☂️⚡️🔥💧🌊",
 
   /** 絵文字（動物・植物） */
-  emojiAnimals: "🐶🐱🐭🐹🐰🦊🐻🐼🐨🐯🦁🐮🐷🐽🐸🐵🙈🙉🙊🐒🐔🐧🐦🐤🐣🐥🦆🦅🦉🦇🐺🐗🐴🦄🐝🐛🦋🐌🐞🐜🦟🦗🕷️🦂🐢🐍🦎🦖🦕🐙🦑🦐🦞🦀🐡🐠🐟🐬🐳🐋",
+  emojiAnimals:
+    "🐶🐱🐭🐹🐰🦊🐻🐼🐨🐯🦁🐮🐷🐽🐸🐵🙈🙉🙊🐒🐔🐧🐦🐤🐣🐥🦆🦅🦉🦇🐺🐗🐴🦄🐝🐛🦋🐌🐞🐜🦟🦗🕷️🦂🐢🐍🦎🦖🦕🐙🦑🦐🦞🦀🐡🐠🐟🐬🐳🐋",
 
   /** 絵文字（食べ物） */
-  emojiFood: "🍎🍏🍊🍋🍌🍉🍇🍓🍈🍒🍑🥭🍍🥥🥝🍅🍆🥑🥦🥬🥒🌶️🌽🥕🧄🧅🥔🍠🥐🥯🍞🥖🥨🧀🥚🍳🧈🥞🧇🥓🥩🍗🍖🌭🍔🍟🍕🥪🥙🧆🌮🌯🥗🥘🥫",
+  emojiFood:
+    "🍎🍏🍊🍋🍌🍉🍇🍓🍈🍒🍑🥭🍍🥥🥝🍅🍆🥑🥦🥬🥒🌶️🌽🥕🧄🧅🥔🍠🥐🥯🍞🥖🥨🧀🥚🍳🧈🥞🧇🥓🥩🍗🍖🌭🍔🍟🍕🥪🥙🧆🌮🌯🥗🥘🥫",
 
   /** 絵文字（スポーツ・アクティビティ） */
   emojiSports: "⚽️🏀🏈⚾️🥎🎾🏐🏉🥏🎱🪀🏓🏸🏒🏑🥍🏏🪃🥅⛳️🪁🏹🎣🤿🥊🥋🎽🛹🛼🛷⛸️🥌🎿⛷️🏂🪂🏋️‍♀️🏋️🏋️‍♂️🤼‍♀️🤼🤼‍♂️🤸‍♀️🤸🤸‍♂️⛹️‍♀️⛹️⛹️‍♂️🤺",
 
   /** 絵文字（旅行・場所） */
-  emojiTravel: "🚗🚕🚙🚌🚎🏎️🚓🚑🚒🚐🛻🚚🚛🚜🦯🦽🦼🛴🚲🛵🏍️🛺🚨🚔🚍🚘🚖🚡🚠🚟🚃🚋🚞🚝🚄🚅🚈🚂🚆🚇🚊🚉✈️🛫🛬🛩️💺🛰️🚀🛸🚁🛶⛵️🚤🛥️🛳️⛴️🚢",
+  emojiTravel:
+    "🚗🚕🚙🚌🚎🏎️🚓🚑🚒🚐🛻🚚🚛🚜🦯🦽🦼🛴🚲🛵🏍️🛺🚨🚔🚍🚘🚖🚡🚠🚟🚃🚋🚞🚝🚄🚅🚈🚂🚆🚇🚊🚉✈️🛫🛬🛩️💺🛰️🚀🛸🚁🛶⛵️🚤🛥️🛳️⛴️🚢",
 
   /** 絵文字（楽器・芸術） */
   emojiArts: "🎹🥁🎷🎺🎸🪕🎻🎤🎧📻🎼🎹🥁🎷🎺🎸🪕🎻🎤🎧📻🎼🎵🎶",
@@ -75,7 +81,8 @@ export const JapaneseCharsetTestSet = {
   emojiHands: "👋🤚🖐️✋🖖👌🤌🤏✌️🤞🤟🤘🤙👈👉👆🖕👇☝️👍👎✊👊🤛🤜👏🙌👐🤲🤝🙏",
 
   /** 絵文字（顔 - 感情） */
-  emojiFacesEmotion: "😀😃😄😁😆😅🤣😂🙂🙃😉😊😇🥰😍🤩😘😗☺😚😙🥲😋😛😜🤪😝🤑🤗🤭🤫🤔🤐🤨😐😑😶😏😒🙄😬🤥😌😔😪🤤😴😷🤒🤕🤢🤮🤧🥵🥶🥴😵🤯",
+  emojiFacesEmotion:
+    "😀😃😄😁😆😅🤣😂🙂🙃😉😊😇🥰😍🤩😘😗☺😚😙🥲😋😛😜🤪😝🤑🤗🤭🤫🤔🤐🤨😐😑😶😏😒🙄😬🤥😌😔😪🤤😴😷🤒🤕🤢🤮🤧🥵🥶🥴😵🤯",
 
   /** 絵文字（顔 - 身体） */
   emojiFacesBody: "👶🧒👦👧🧑👱👨🧔👩🧓👴👵🙍🙍‍♂️🙍‍♀️🙎🙎‍♂️🙎‍♀️🙅🙅‍♂️🙅‍♀️🙆🙆‍♂️🙆‍♀️💁💁‍♂️💁‍♀️🙋🙋‍♂️🙋‍♀️🧏🧏‍♂️🧏‍♀️🙇🙇‍♂️🙇‍♀️🤦🤦‍♂️🤦‍♀️🤷🤷‍♂️🤷‍♀️",
@@ -94,9 +101,9 @@ export const JapaneseCharsetTestSet = {
 
   /** 日本の電話番号形式 */
   phoneNumberFormats: [
-    "03-1234-5678",  // 東京
-    "06-1234-5678",  // 大阪
-    "011-123-4567",  // 札幌
+    "03-1234-5678", // 東京
+    "06-1234-5678", // 大阪
+    "011-123-4567", // 札幌
     "090-1234-5678", // 携帯
     "080-1234-5678", // 携帯
     "070-1234-5678", // PHS
@@ -104,9 +111,9 @@ export const JapaneseCharsetTestSet = {
 
   /** 日本の郵便番号形式 */
   postalCodeFormats: [
-    "100-0001",  // 東京都千代田区
-    "530-0001",  // 大阪府大阪市
-    "060-0001",  // 北海道札幌市
+    "100-0001", // 東京都千代田区
+    "530-0001", // 大阪府大阪市
+    "060-0001", // 北海道札幌市
   ],
 
   /** 日本の住所形式 */
@@ -118,7 +125,7 @@ export const JapaneseCharsetTestSet = {
 
   /** 日付形式 */
   dateFormatting: {
-   和暦: {
+    和暦: {
       平成: "平成30年4月1日",
       令和: "令和5年3月8日",
       昭和: "昭和64年1月7日",
@@ -164,7 +171,8 @@ export const JapaneseCharsetTestSet = {
   ],
 
   /** 機種依存文字 */
-  deviceDependent: "①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳㊑㊒㊓㊔㊕㊖㊗㊘㊙㊚㊛㊜㊝㊞㊟㊠㊡㊢㊣㊤㊥㊦㊧㊨㊩㊪㊫㊬㊭㊮㊯㊰㋐㋑㋒㋓㋔㋕㋖㋗㋘㋙㋚㋛㋜㋝㋞㋟㋠㋡㋢㋣㋤㋥㋦㋧㋨㋩㋪㋫㋬㋭㋮㋯㋰㋱㋲㋳㋴㋵㋶㋷㋸㋹㋺㋻㋼㋽㋾㍘㍙㍚㍛㍜㍝㍞㍟㍠㍡㍢㍣㍤㍥㍦㍧㍨㍩㍪㍫㍬㍭㍮㍯㍰㍗㎎㎏㎜㎝㎞㎡㎟㎠㎢㎣㎤㎥㎦㎕㎖㎗㎘㏄㏠㏡㏢㏣㏤㏥㏦㏧㏨㏩㏪㏫㏬㏭㏮㏯㏰㏱㏲㏳",
+  deviceDependent:
+    "①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳㊑㊒㊓㊔㊕㊖㊗㊘㊙㊚㊛㊜㊝㊞㊟㊠㊡㊢㊣㊤㊥㊦㊧㊨㊩㊪㊫㊬㊭㊮㊯㊰㋐㋑㋒㋓㋔㋕㋖㋗㋘㋙㋚㋛㋜㋝㋞㋟㋠㋡㋢㋣㋤㋥㋦㋧㋨㋩㋪㋫㋬㋭㋮㋯㋰㋱㋲㋳㋴㋵㋶㋷㋸㋹㋺㋻㋼㋽㋾㍘㍙㍚㍛㍜㍝㍞㍟㍠㍡㍢㍣㍤㍥㍦㍧㍨㍩㍪㍫㍬㍭㍮㍯㍰㍗㎎㎏㎜㎝㎞㎡㎟㎠㎢㎣㎤㎥㎦㎕㎖㎗㎘㏄㏠㏡㏢㏣㏤㏥㏦㏧㏨㏩㏪㏫㏬㏭㏮㏯㏰㏱㏲㏳",
 
   /** 丸数字・囲み文字 */
   circledNumbers: "①②③④⑤⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳㉑㉒㉓㉔㉕㉖㉗㉘㉙㉚㉛㉜㉝㉞㉟㊱㊲㊳㊴㊵㊶㊷㊸㊹㊺㊻㊼㊽㊾㊿",
@@ -176,18 +184,15 @@ export const JapaneseCharsetTestSet = {
 /**
  * すべてのテスト文字列を連結したセット
  */
-export const JapaneseCharsetAllInOne = Object.values(JapaneseCharsetTestSet).reduce(
-  (acc, val) => {
-    if (Array.isArray(val)) {
-      return acc + val.join("");
-    }
-    if (typeof val === "object") {
-      return acc + Object.values(val).flat().join("");
-    }
-    return acc + val;
-  },
-  ""
-);
+export const JapaneseCharsetAllInOne = Object.values(JapaneseCharsetTestSet).reduce((acc, val) => {
+  if (Array.isArray(val)) {
+    return acc + val.join("");
+  }
+  if (typeof val === "object") {
+    return acc + Object.values(val).flat().join("");
+  }
+  return acc + val;
+}, "");
 
 /**
  * UTF-8バイト長別テストセット
@@ -206,7 +211,13 @@ export const Utf8ByteLengthTestSet = {
   fourByte: JapaneseCharsetTestSet.surrogatePairs + "🇯🇵🇺🇸🇬🇧",
 
   /** 組み合わせテスト（各バイト長を混在） */
-  mixed: "ABC" + JapaneseCharsetTestSet.hiragana + "123" + JapaneseCharsetTestSet.katakana + "!@#" + JapaneseCharsetTestSet.basicKanji,
+  mixed:
+    "ABC" +
+    JapaneseCharsetTestSet.hiragana +
+    "123" +
+    JapaneseCharsetTestSet.katakana +
+    "!@#" +
+    JapaneseCharsetTestSet.basicKanji,
 } as const;
 
 /**

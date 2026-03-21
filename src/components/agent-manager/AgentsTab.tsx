@@ -140,7 +140,10 @@ export default function AgentsTab({
               {tr("아직 에이전트가 없습니다", "No agents yet")}
             </div>
             <div className="text-sm mb-4">
-              {tr("+ 에이전트 추가 버튼으로 첫 번째 에이전트를 고용하세요", "Hire your first agent using the + Add Agent button above")}
+              {tr(
+                "+ 에이전트 추가 버튼으로 첫 번째 에이전트를 고용하세요",
+                "Hire your first agent using the + Add Agent button above",
+              )}
             </div>
           </div>
         ) : (

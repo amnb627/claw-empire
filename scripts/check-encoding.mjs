@@ -41,12 +41,13 @@ function log(level, message, data = null) {
   if (OPTIONS.json) {
     console.log(JSON.stringify({ level, message, data, timestamp: new Date().toISOString() }));
   } else {
-    const prefix = {
-      info: "[INFO]",
-      warn: "[WARN]",
-      error: "[ERROR]",
-      success: "[OK]",
-    }[level] || `[${level.toUpperCase()}]`;
+    const prefix =
+      {
+        info: "[INFO]",
+        warn: "[WARN]",
+        error: "[ERROR]",
+        success: "[OK]",
+      }[level] || `[${level.toUpperCase()}]`;
     console.log(`${prefix} ${message}`);
     if (data && OPTIONS.verbose) {
       console.log(JSON.stringify(data, null, 2));
@@ -159,7 +160,7 @@ function checkPackageJson() {
   // scriptsにエンコーディング関連の設定があるか
   if (pkg.scripts) {
     const encodingScripts = Object.entries(pkg.scripts).filter(
-      ([, cmd]) => cmd.includes("charset") || cmd.includes("encoding") || cmd.includes("utf8")
+      ([, cmd]) => cmd.includes("charset") || cmd.includes("encoding") || cmd.includes("utf8"),
     );
     if (encodingScripts.length > 0) {
       info.encodingScripts = encodingScripts.map(([name]) => name);
@@ -206,12 +207,7 @@ function checkTsConfig() {
  */
 function checkViteConfig() {
   const result = new CheckResult("Build", "vite.config.ts");
-  const configPaths = [
-    "vite.config.ts",
-    "vite.config.js",
-    "vite.config.mts",
-    "src/vite.config.ts",
-  ];
+  const configPaths = ["vite.config.ts", "vite.config.js", "vite.config.mts", "src/vite.config.ts"];
 
   let foundConfig = null;
   for (const path of configPaths) {
@@ -240,12 +236,7 @@ function checkViteConfig() {
  */
 function checkHtmlEncoding() {
   const result = new CheckResult("Frontend", "HTML charset declaration");
-  const htmlPaths = [
-    "index.html",
-    "src/index.html",
-    "public/index.html",
-    "dist/index.html",
-  ];
+  const htmlPaths = ["index.html", "src/index.html", "public/index.html", "dist/index.html"];
 
   const findings = [];
   for (const path of htmlPaths) {
@@ -253,7 +244,7 @@ function checkHtmlEncoding() {
       const content = readFileSync(resolve(ROOT_DIR, path), "utf-8");
       const charsetMatch = content.match(/<meta[^>]+charset=['"]?([^'"\s>]+)/i);
       const httpEquivMatch = content.match(
-        /<meta\s+http-equiv=['"]content-type['"][^>]*content=['"][^;]*;\s*charset=([^'"]+)/i
+        /<meta\s+http-equiv=['"]content-type['"][^>]*content=['"][^;]*;\s*charset=([^'"]+)/i,
       );
 
       findings.push({
@@ -282,13 +273,7 @@ function checkCssEncoding() {
   const result = new CheckResult("Frontend", "CSS charset declaration");
 
   // 主要なCSSファイルを探す
-  const cssPaths = [
-    "src/index.css",
-    "src/app.css",
-    "src/style.css",
-    "src/styles/index.css",
-    "src/assets/styles.css",
-  ];
+  const cssPaths = ["src/index.css", "src/app.css", "src/style.css", "src/styles/index.css", "src/assets/styles.css"];
 
   const findings = [];
   for (const path of cssPaths) {
@@ -431,9 +416,7 @@ function checkDatabaseEncoding() {
   const info = {
     findings,
     count: findings.length,
-    hasUtf8Config: findings.some((f) =>
-      Object.values(f.analysis).some((v) => v && /utf/i.test(v))
-    ),
+    hasUtf8Config: findings.some((f) => Object.values(f.analysis).some((v) => v && /utf/i.test(v))),
   };
 
   return result.pass(info);
@@ -515,9 +498,7 @@ function checkCiCdEncoding() {
   const info = {
     findings,
     count: findings.length,
-    hasExplicitEncoding: findings.some((f) =>
-      Object.values(f.analysis).some((v) => v && /utf/i.test(v))
-    ),
+    hasExplicitEncoding: findings.some((f) => Object.values(f.analysis).some((v) => v && /utf/i.test(v))),
   };
 
   return result.pass(info);
@@ -529,12 +510,7 @@ function checkCiCdEncoding() {
 function checkDockerEncoding() {
   const result = new CheckResult("Infrastructure", "Docker encoding settings");
 
-  const dockerFiles = [
-    "Dockerfile",
-    "docker-compose.yml",
-    "docker-compose.yaml",
-    ".dockerignore",
-  ];
+  const dockerFiles = ["Dockerfile", "docker-compose.yml", "docker-compose.yaml", ".dockerignore"];
 
   const findings = [];
   for (const path of dockerFiles) {
@@ -552,8 +528,8 @@ function checkDockerEncoding() {
   const info = {
     findings,
     count: findings.length,
-    hasUtf8Config: findings.some((f) =>
-      Object.values(f.analysis).some((v) => v && /utf/i.test(v)) || f.analysis?.utf8Env
+    hasUtf8Config: findings.some(
+      (f) => Object.values(f.analysis).some((v) => v && /utf/i.test(v)) || f.analysis?.utf8Env,
     ),
   };
 
@@ -628,13 +604,17 @@ async function main() {
     }
 
     console.log("\n" + "=".repeat(60));
-    console.log(`Total: ${results.length} | ${colorize(`${passed} passed`, "green")} | ${colorize(`${failed} failed`, failed > 0 ? "red" : "yellow")}`);
+    console.log(
+      `Total: ${results.length} | ${colorize(`${passed} passed`, "green")} | ${colorize(`${failed} failed`, failed > 0 ? "red" : "yellow")}`,
+    );
     console.log("=".repeat(60));
   } else {
-    console.log(JSON.stringify({
-      summary: { total: results.length, passed, failed },
-      results,
-    }));
+    console.log(
+      JSON.stringify({
+        summary: { total: results.length, passed, failed },
+        results,
+      }),
+    );
   }
 
   process.exit(failed > 0 ? 1 : 0);

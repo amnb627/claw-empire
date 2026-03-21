@@ -17,8 +17,14 @@ function createFakeResponse(): FakeResponse {
   const res: FakeResponse = {
     statusCode: 200,
     payload: null,
-    status(code: number) { this.statusCode = code; return this; },
-    json(body: unknown) { this.payload = body; return this; },
+    status(code: number) {
+      this.statusCode = code;
+      return this;
+    },
+    json(body: unknown) {
+      this.payload = body;
+      return this;
+    },
   };
   return res;
 }
@@ -49,9 +55,7 @@ function createFakeApp() {
     for (const route of routes) {
       if (route.method !== upper) continue;
       // Convert Express param patterns like /:key/analytics to regex
-      const pattern = route.path
-        .replace(/:[a-zA-Z_]+/g, "([^/]+)")
-        .replace(/\//g, "\\/");
+      const pattern = route.path.replace(/:[a-zA-Z_]+/g, "([^/]+)").replace(/\//g, "\\/");
       const re = new RegExp(`^${pattern}$`);
       if (re.test(path)) {
         matched = route;
@@ -69,10 +73,12 @@ function createFakeApp() {
     // Extract route params
     const extractedParams: Record<string, string> = { ...params };
     const paramNames: string[] = [];
-    const paramPattern = matched.path.replace(/:[a-zA-Z_]+/g, (m) => {
-      paramNames.push(m.slice(1));
-      return "([^/]+)";
-    }).replace(/\//g, "\\/");
+    const paramPattern = matched.path
+      .replace(/:[a-zA-Z_]+/g, (m) => {
+        paramNames.push(m.slice(1));
+        return "([^/]+)";
+      })
+      .replace(/\//g, "\\/");
     const paramRe = new RegExp(`^${paramPattern}$`);
     const paramMatch = path.match(paramRe);
     if (paramMatch) {
@@ -158,7 +164,12 @@ describe("Pack analytics API", () => {
     insertTask(db, { id: "t3", workflow_pack_key: "report", status: "planned", created_at: since + 300 });
 
     const { app, dispatch } = createFakeApp();
-    registerWorkflowPackRoutes({ app: app as any, db, nowMs: () => Date.now(), normalizeTextField: (v: any) => (typeof v === "string" ? v.trim() || null : null) as any });
+    registerWorkflowPackRoutes({
+      app: app as any,
+      db,
+      nowMs: () => Date.now(),
+      normalizeTextField: (v: any) => (typeof v === "string" ? v.trim() || null : null) as any,
+    });
 
     const res = dispatch("GET", "/report/analytics", undefined, { key: "report" });
     expect(res.statusCode).toBe(200);
@@ -174,7 +185,12 @@ describe("Pack analytics API", () => {
     // No tasks at all
 
     const { app, dispatch } = createFakeApp();
-    registerWorkflowPackRoutes({ app: app as any, db, nowMs: () => Date.now(), normalizeTextField: (v: any) => (typeof v === "string" ? v.trim() || null : null) as any });
+    registerWorkflowPackRoutes({
+      app: app as any,
+      db,
+      nowMs: () => Date.now(),
+      normalizeTextField: (v: any) => (typeof v === "string" ? v.trim() || null : null) as any,
+    });
 
     const res = dispatch("GET", "/development/analytics", undefined, { key: "development" });
     expect(res.statusCode).toBe(200);
@@ -193,7 +209,12 @@ describe("Pack analytics API", () => {
     insertRevision(db, "fp2", "missing contacts section");
 
     const { app, dispatch } = createFakeApp();
-    registerWorkflowPackRoutes({ app: app as any, db, nowMs: () => Date.now(), normalizeTextField: (v: any) => (typeof v === "string" ? v.trim() || null : null) as any });
+    registerWorkflowPackRoutes({
+      app: app as any,
+      db,
+      nowMs: () => Date.now(),
+      normalizeTextField: (v: any) => (typeof v === "string" ? v.trim() || null : null) as any,
+    });
 
     const res = dispatch("GET", "/report/analytics", undefined, { key: "report" });
     const payload = res.payload as any;
@@ -205,7 +226,12 @@ describe("Pack analytics API", () => {
   it("returns 404 for non-existent pack", () => {
     const db = setupDb();
     const { app, dispatch } = createFakeApp();
-    registerWorkflowPackRoutes({ app: app as any, db, nowMs: () => Date.now(), normalizeTextField: (v: any) => (typeof v === "string" ? v.trim() || null : null) as any });
+    registerWorkflowPackRoutes({
+      app: app as any,
+      db,
+      nowMs: () => Date.now(),
+      normalizeTextField: (v: any) => (typeof v === "string" ? v.trim() || null : null) as any,
+    });
 
     const res = dispatch("GET", "/nonexistent_pack/analytics", undefined, { key: "nonexistent_pack" });
     expect(res.statusCode).toBe(404);
@@ -215,9 +241,9 @@ describe("Pack analytics API", () => {
 describe("task_schedules table and CRUD", () => {
   it("task_schedules table exists after schema application", () => {
     const db = setupDb();
-    const result = db
-      .prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name='task_schedules'`)
-      .get() as { name: string } | undefined;
+    const result = db.prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name='task_schedules'`).get() as
+      | { name: string }
+      | undefined;
     expect(result?.name).toBe("task_schedules");
   });
 

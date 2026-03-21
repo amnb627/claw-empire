@@ -20,33 +20,21 @@ describe("useKeyboardShortcuts", () => {
 
   it("fires handler for matching plain key", () => {
     const handler = vi.fn();
-    render(
-      <ShortcutProbe
-        shortcuts={[{ key: "n", description: "New task", handler }]}
-      />,
-    );
+    render(<ShortcutProbe shortcuts={[{ key: "n", description: "New task", handler }]} />);
     fireEvent.keyDown(window, { key: "n" });
     expect(handler).toHaveBeenCalledTimes(1);
   });
 
   it("fires handler for matching Ctrl+key combo", () => {
     const handler = vi.fn();
-    render(
-      <ShortcutProbe
-        shortcuts={[{ key: "s", ctrl: true, description: "Save", handler }]}
-      />,
-    );
+    render(<ShortcutProbe shortcuts={[{ key: "s", ctrl: true, description: "Save", handler }]} />);
     fireEvent.keyDown(window, { key: "s", ctrlKey: true });
     expect(handler).toHaveBeenCalledTimes(1);
   });
 
   it("does NOT fire handler when Ctrl is pressed but shortcut does not require it", () => {
     const handler = vi.fn();
-    render(
-      <ShortcutProbe
-        shortcuts={[{ key: "n", description: "New task", handler }]}
-      />,
-    );
+    render(<ShortcutProbe shortcuts={[{ key: "n", description: "New task", handler }]} />);
     fireEvent.keyDown(window, { key: "n", ctrlKey: true });
     expect(handler).not.toHaveBeenCalled();
   });
@@ -143,22 +131,14 @@ describe("useKeyboardShortcuts", () => {
 
   it("fires handler for shift+key combo", () => {
     const handler = vi.fn();
-    render(
-      <ShortcutProbe
-        shortcuts={[{ key: "?", shift: true, description: "Help", handler }]}
-      />,
-    );
+    render(<ShortcutProbe shortcuts={[{ key: "?", shift: true, description: "Help", handler }]} />);
     fireEvent.keyDown(window, { key: "?", shiftKey: true });
     expect(handler).toHaveBeenCalledTimes(1);
   });
 
   it("does NOT fire shift shortcut without shift key", () => {
     const handler = vi.fn();
-    render(
-      <ShortcutProbe
-        shortcuts={[{ key: "?", shift: true, description: "Help", handler }]}
-      />,
-    );
+    render(<ShortcutProbe shortcuts={[{ key: "?", shift: true, description: "Help", handler }]} />);
     fireEvent.keyDown(window, { key: "?", shiftKey: false });
     expect(handler).not.toHaveBeenCalled();
   });

@@ -96,7 +96,12 @@ function ScheduleForm({ t, isEdit, form, setForm, saving, saveError, onSave, onC
           style={inputStyle}
         />
         <p className="mt-0.5 text-xs" style={{ color: "var(--th-text-muted, #94a3b8)" }}>
-          {t({ ko: "{{date}} 는 YYYY-MM-DD 로 치환됩니다.", en: "{{date}} will be replaced with YYYY-MM-DD.", ja: "{{date}} は YYYY-MM-DD に置換されます。", zh: "{{date}} 将替换为 YYYY-MM-DD。" })}
+          {t({
+            ko: "{{date}} 는 YYYY-MM-DD 로 치환됩니다.",
+            en: "{{date}} will be replaced with YYYY-MM-DD.",
+            ja: "{{date}} は YYYY-MM-DD に置換されます。",
+            zh: "{{date}} 将替换为 YYYY-MM-DD。",
+          })}
         </p>
       </div>
 
@@ -121,7 +126,9 @@ function ScheduleForm({ t, isEdit, form, setForm, saving, saveError, onSave, onC
           <input
             type="text"
             value={form.workflow_pack_key}
-            onChange={(e) => setForm({ ...form, workflow_pack_key: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "") })}
+            onChange={(e) =>
+              setForm({ ...form, workflow_pack_key: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "") })
+            }
             placeholder="report"
             className={inputCls}
             style={inputStyle}
@@ -140,7 +147,8 @@ function ScheduleForm({ t, isEdit, form, setForm, saving, saveError, onSave, onC
             className={inputCls}
             style={{
               ...inputStyle,
-              borderColor: intervalInvalid && form.interval_days !== "" ? "var(--th-danger, #f87171)" : inputStyle.borderColor,
+              borderColor:
+                intervalInvalid && form.interval_days !== "" ? "var(--th-danger, #f87171)" : inputStyle.borderColor,
             }}
           />
         </div>
@@ -175,7 +183,11 @@ function ScheduleForm({ t, isEdit, form, setForm, saving, saveError, onSave, onC
           onClick={onCancel}
           disabled={saving}
           className="px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
-          style={{ background: "var(--th-input-bg)", color: "var(--th-text-secondary)", border: "1px solid var(--th-card-border)" }}
+          style={{
+            background: "var(--th-input-bg)",
+            color: "var(--th-text-secondary)",
+            border: "1px solid var(--th-card-border)",
+          }}
         >
           {t({ ko: "취소", en: "Cancel", ja: "キャンセル", zh: "取消" })}
         </button>
@@ -251,12 +263,26 @@ export default function ScheduleManagerTab({ t }: ScheduleManagerTabProps) {
   const handleSave = useCallback(async () => {
     setSaveError(null);
     if (!form.title_template.trim()) {
-      setSaveError(t({ ko: "제목 템플릿은 필수입니다.", en: "Title template is required.", ja: "タイトルテンプレートは必須です。", zh: "标题模板为必填项。" }));
+      setSaveError(
+        t({
+          ko: "제목 템플릿은 필수입니다.",
+          en: "Title template is required.",
+          ja: "タイトルテンプレートは必須です。",
+          zh: "标题模板为必填项。",
+        }),
+      );
       return;
     }
     const intervalNum = parseInt(form.interval_days, 10);
     if (!Number.isFinite(intervalNum) || intervalNum < 1) {
-      setSaveError(t({ ko: "반복 간격은 1 이상의 정수여야 합니다.", en: "Interval must be a positive integer.", ja: "間隔は正の整数でなければなりません。", zh: "间隔必须为正整数。" }));
+      setSaveError(
+        t({
+          ko: "반복 간격은 1 이상의 정수여야 합니다.",
+          en: "Interval must be a positive integer.",
+          ja: "間隔は正の整数でなければなりません。",
+          zh: "间隔必须为正整数。",
+        }),
+      );
       return;
     }
 
@@ -300,7 +326,10 @@ export default function ScheduleManagerTab({ t }: ScheduleManagerTabProps) {
       try {
         await api.deleteSchedule(s.id);
         setSchedules((prev) => prev.filter((x) => x.id !== s.id));
-        if (editId === s.id) { setShowForm(false); setEditId(null); }
+        if (editId === s.id) {
+          setShowForm(false);
+          setEditId(null);
+        }
       } catch (err) {
         console.error("Delete schedule failed:", err);
       }
@@ -317,17 +346,20 @@ export default function ScheduleManagerTab({ t }: ScheduleManagerTabProps) {
     }
   }, []);
 
-  const handleTriggerNow = useCallback(async (s: TaskSchedule) => {
-    setTriggeringId(s.id);
-    try {
-      await api.triggerSchedule(s.id);
-      await loadSchedules();
-    } catch (err) {
-      console.error("Trigger schedule failed:", err);
-    } finally {
-      setTriggeringId(null);
-    }
-  }, [loadSchedules]);
+  const handleTriggerNow = useCallback(
+    async (s: TaskSchedule) => {
+      setTriggeringId(s.id);
+      try {
+        await api.triggerSchedule(s.id);
+        await loadSchedules();
+      } catch (err) {
+        console.error("Trigger schedule failed:", err);
+      } finally {
+        setTriggeringId(null);
+      }
+    },
+    [loadSchedules],
+  );
 
   if (loading) {
     return (
@@ -342,7 +374,10 @@ export default function ScheduleManagerTab({ t }: ScheduleManagerTabProps) {
 
   if (loadError) {
     return (
-      <div className="rounded-xl p-5 text-center" style={{ background: "var(--th-card-bg)", border: "1px solid var(--th-card-border)" }}>
+      <div
+        className="rounded-xl p-5 text-center"
+        style={{ background: "var(--th-card-bg)", border: "1px solid var(--th-card-border)" }}
+      >
         <p className="text-sm text-red-400" role="alert">
           {t({ ko: "오류:", en: "Error:", ja: "エラー:", zh: "错误：" })} {loadError}
         </p>
@@ -395,7 +430,10 @@ export default function ScheduleManagerTab({ t }: ScheduleManagerTabProps) {
       {/* Schedule list */}
       <div className="space-y-2">
         {schedules.length === 0 && (
-          <div className="rounded-xl p-8 text-center" style={{ background: "var(--th-card-bg)", border: "1px solid var(--th-card-border)" }}>
+          <div
+            className="rounded-xl p-8 text-center"
+            style={{ background: "var(--th-card-bg)", border: "1px solid var(--th-card-border)" }}
+          >
             <p className="text-sm" style={{ color: "var(--th-text-secondary)" }}>
               {t({ ko: "예약 작업 없음.", en: "No schedules found.", ja: "スケジュールなし。", zh: "暂无计划任务。" })}
             </p>
@@ -415,7 +453,10 @@ export default function ScheduleManagerTab({ t }: ScheduleManagerTabProps) {
                   </span>
                   <span
                     className="text-xs px-1.5 py-0.5 rounded"
-                    style={{ background: "var(--th-accent-bg, rgba(59,130,246,0.15))", color: "var(--th-accent, #60a5fa)" }}
+                    style={{
+                      background: "var(--th-accent-bg, rgba(59,130,246,0.15))",
+                      color: "var(--th-accent, #60a5fa)",
+                    }}
                   >
                     {s.workflow_pack_key}
                   </span>
@@ -429,7 +470,8 @@ export default function ScheduleManagerTab({ t }: ScheduleManagerTabProps) {
                   </span>
                   {s.last_triggered_at && (
                     <span>
-                      {t({ ko: "마지막", en: "Last", ja: "前回", zh: "上次" })}: {new Date(s.last_triggered_at).toLocaleDateString()}
+                      {t({ ko: "마지막", en: "Last", ja: "前回", zh: "上次" })}:{" "}
+                      {new Date(s.last_triggered_at).toLocaleDateString()}
                     </span>
                   )}
                 </div>
@@ -442,7 +484,11 @@ export default function ScheduleManagerTab({ t }: ScheduleManagerTabProps) {
                   disabled={triggeringId === s.id}
                   aria-label={`${t({ ko: "지금 실행", en: "Fire now", ja: "今すぐ実行", zh: "立即触发" })} ${s.title_template}`}
                   className="px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors disabled:opacity-50"
-                  style={{ background: "var(--th-input-bg)", color: "var(--th-text-secondary)", border: "1px solid var(--th-card-border)" }}
+                  style={{
+                    background: "var(--th-input-bg)",
+                    color: "var(--th-text-secondary)",
+                    border: "1px solid var(--th-card-border)",
+                  }}
                 >
                   {triggeringId === s.id
                     ? "..."
@@ -454,7 +500,11 @@ export default function ScheduleManagerTab({ t }: ScheduleManagerTabProps) {
                   onClick={() => handleEdit(s)}
                   aria-label={`${t({ ko: "편집", en: "Edit", ja: "編集", zh: "编辑" })} ${s.title_template}`}
                   className="px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors"
-                  style={{ background: "var(--th-input-bg)", color: "var(--th-text-secondary)", border: "1px solid var(--th-card-border)" }}
+                  style={{
+                    background: "var(--th-input-bg)",
+                    color: "var(--th-text-secondary)",
+                    border: "1px solid var(--th-card-border)",
+                  }}
                 >
                   {t({ ko: "편집", en: "Edit", ja: "編集", zh: "编辑" })}
                 </button>
@@ -467,7 +517,9 @@ export default function ScheduleManagerTab({ t }: ScheduleManagerTabProps) {
                   role="switch"
                   aria-checked={s.enabled}
                 >
-                  <div className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-all ${s.enabled ? "left-[22px]" : "left-0.5"}`} />
+                  <div
+                    className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-all ${s.enabled ? "left-[22px]" : "left-0.5"}`}
+                  />
                 </button>
 
                 <button
@@ -475,7 +527,11 @@ export default function ScheduleManagerTab({ t }: ScheduleManagerTabProps) {
                   onClick={() => void handleDelete(s)}
                   aria-label={`${t({ ko: "삭제", en: "Delete", ja: "削除", zh: "删除" })} ${s.title_template}`}
                   className="px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors"
-                  style={{ background: "var(--th-danger-bg, rgba(248,113,113,0.12))", color: "var(--th-danger, #f87171)", border: "1px solid var(--th-danger-border, rgba(248,113,113,0.25))" }}
+                  style={{
+                    background: "var(--th-danger-bg, rgba(248,113,113,0.12))",
+                    color: "var(--th-danger, #f87171)",
+                    border: "1px solid var(--th-danger-border, rgba(248,113,113,0.25))",
+                  }}
                 >
                   {t({ ko: "삭제", en: "Delete", ja: "削除", zh: "删除" })}
                 </button>

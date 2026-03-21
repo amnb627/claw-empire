@@ -93,17 +93,18 @@ describe("app utils — areTaskListsEquivalent", () => {
       id: "t1",
       title: "Task",
       description: null,
-      status: "planned",
+      status: "planned" as const,
       priority: 1,
       department_id: "d1",
       assigned_agent_id: null,
       created_at: 1000,
       updated_at: 1000,
       completed_at: null,
-      task_type: "general",
+      task_type: "general" as const,
       project_id: null,
       project_path: null,
-      workflow_pack_key: null,
+      result: null,
+      workflow_pack_key: undefined,
       source_task_id: null,
       started_at: null,
     };
@@ -115,17 +116,18 @@ describe("app utils — areTaskListsEquivalent", () => {
       id: "t1",
       title: "Task",
       description: null,
-      status: "planned",
+      status: "planned" as const,
       priority: 1,
       department_id: "d1",
       assigned_agent_id: null,
       created_at: 1000,
       updated_at: 1000,
       completed_at: null,
-      task_type: "general",
+      task_type: "general" as const,
       project_id: null,
       project_path: null,
-      workflow_pack_key: null,
+      result: null,
+      workflow_pack_key: undefined,
       source_task_id: null,
       started_at: null,
     };
@@ -171,9 +173,7 @@ describe("MessageContent renders without crashing", () => {
 
 describe("I18nProvider renders children", () => {
   it("renders child content wrapped in provider", () => {
-    render(
-      createElement(I18nProvider, { language: "en" }, createElement("span", null, "i18n-child")),
-    );
+    render(createElement(I18nProvider, { language: "en", children: createElement("span", null, "i18n-child") }));
     expect(screen.getByText("i18n-child")).toBeTruthy();
   });
 });

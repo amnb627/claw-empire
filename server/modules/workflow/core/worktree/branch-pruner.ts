@@ -1,5 +1,5 @@
-import { execFileSync } from 'node:child_process';
-import type { DatabaseSync } from 'node:sqlite';
+import { execFileSync } from "node:child_process";
+import type { DatabaseSync } from "node:sqlite";
 
 /**
  * Prune stale climpire/* branches that have no associated active task.
@@ -17,16 +17,16 @@ export async function pruneStaleClimpireBranches(
 
   try {
     // List all climpire/* local branches
-    const output = execFileSync('git', ['branch', '--list', 'climpire/*'], {
+    const output = execFileSync("git", ["branch", "--list", "climpire/*"], {
       cwd: projectPath,
-      encoding: 'utf-8',
+      encoding: "utf-8",
       timeout: 10000,
     });
 
     const branches = output
-      .split('\n')
-      .map(b => b.trim().replace(/^\*\s*/, ''))
-      .filter(b => b.startsWith('climpire/'));
+      .split("\n")
+      .map((b) => b.trim().replace(/^\*\s*/, ""))
+      .filter((b) => b.startsWith("climpire/"));
 
     if (branches.length === 0) {
       return { pruned, errors };
@@ -34,22 +34,20 @@ export async function pruneStaleClimpireBranches(
 
     // Collect short-ids of all currently active tasks (not done / cancelled)
     const activeTasks = db
-      .prepare(
-        `SELECT id FROM tasks WHERE status IN ('inbox','planned','in_progress','review','collaborating')`,
-      )
+      .prepare(`SELECT id FROM tasks WHERE status IN ('inbox','planned','in_progress','review','collaborating')`)
       .all() as Array<{ id: string }>;
-    const activeShortIds = new Set(activeTasks.map(t => t.id.slice(0, 8)));
+    const activeShortIds = new Set(activeTasks.map((t) => t.id.slice(0, 8)));
 
     for (const branch of branches) {
       // branch name is `climpire/<shortId>` or `climpire/<shortId>-<n>`
-      const afterPrefix = branch.replace(/^climpire\//, '');
+      const afterPrefix = branch.replace(/^climpire\//, "");
       const shortId = afterPrefix.slice(0, 8);
       if (activeShortIds.has(shortId)) continue; // branch belongs to an active task
 
       try {
-        execFileSync('git', ['branch', '-D', branch], {
+        execFileSync("git", ["branch", "-D", branch], {
           cwd: projectPath,
-          encoding: 'utf-8',
+          encoding: "utf-8",
           timeout: 5000,
         });
         pruned.push(branch);
@@ -63,9 +61,7 @@ export async function pruneStaleClimpireBranches(
   }
 
   if (pruned.length > 0) {
-    console.log(
-      `[BranchPruner] Pruned ${pruned.length} stale branches: ${pruned.join(', ')}`,
-    );
+    console.log(`[BranchPruner] Pruned ${pruned.length} stale branches: ${pruned.join(", ")}`);
   }
 
   return { pruned, errors };

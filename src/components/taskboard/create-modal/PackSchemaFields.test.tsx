@@ -94,7 +94,11 @@ describe("PackSchemaFields", () => {
 
   it("shows assembled prompt when previewExpanded is true", () => {
     const prompt = assemblePackPrompt("Facility Visit", schema, { facility: "Mie", visit_date: "2026-03-25" }, "");
-    renderComponent({ previewExpanded: true, assembledPrompt: prompt, fieldValues: { facility: "Mie", visit_date: "2026-03-25" } });
+    renderComponent({
+      previewExpanded: true,
+      assembledPrompt: prompt,
+      fieldValues: { facility: "Mie", visit_date: "2026-03-25" },
+    });
     const preview = screen.getByTestId("pack-prompt-preview");
     expect(preview).toBeInTheDocument();
     expect(preview.textContent).toContain("Facility Visit");

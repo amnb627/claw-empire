@@ -328,7 +328,9 @@ export async function updateWorkflowPack(
 }
 
 export async function createWorkflowPack(
-  input: { key: string; name: string } & Partial<Omit<WorkflowPackConfig, "key" | "name" | "created_at" | "updated_at">>,
+  input: { key: string; name: string } & Partial<
+    Omit<WorkflowPackConfig, "key" | "name" | "created_at" | "updated_at">
+  >,
 ): Promise<{ ok: boolean; pack: WorkflowPackConfig }> {
   return request<{ ok: boolean; pack: WorkflowPackConfig }>("/api/workflow-packs", {
     method: "POST",
@@ -419,9 +421,7 @@ export async function getSchedules(): Promise<TaskSchedule[]> {
   return j.schedules ?? [];
 }
 
-export async function createSchedule(
-  input: TaskScheduleCreateInput,
-): Promise<{ ok: boolean; schedule: TaskSchedule }> {
+export async function createSchedule(input: TaskScheduleCreateInput): Promise<{ ok: boolean; schedule: TaskSchedule }> {
   return post<{ ok: boolean; schedule: TaskSchedule }>("/api/schedules", input);
 }
 

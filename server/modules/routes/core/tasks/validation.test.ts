@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  parseBoundedInt,
-  truncateField,
-  validateTaskCreateBody,
-} from "./validation.ts";
+import { parseBoundedInt, truncateField, validateTaskCreateBody } from "./validation.ts";
 
 const normalize = (v: unknown) => {
   if (v === null || v === undefined) return null;
@@ -94,49 +90,31 @@ describe("validateTaskCreateBody", () => {
   });
 
   it("validates status enum", () => {
-    const valid = validateTaskCreateBody(
-      { title: "t", status: "review" },
-      normalize,
-    );
+    const valid = validateTaskCreateBody({ title: "t", status: "review" }, normalize);
     expect(valid.ok).toBe(true);
 
-    const invalid = validateTaskCreateBody(
-      { title: "t", status: "unknown_status" },
-      normalize,
-    );
+    const invalid = validateTaskCreateBody({ title: "t", status: "unknown_status" }, normalize);
     expect(invalid.ok).toBe(false);
     if (!invalid.ok) expect(invalid.error).toBe("invalid_status");
   });
 
   it("validates task_type enum", () => {
-    const valid = validateTaskCreateBody(
-      { title: "t", task_type: "development" },
-      normalize,
-    );
+    const valid = validateTaskCreateBody({ title: "t", task_type: "development" }, normalize);
     expect(valid.ok).toBe(true);
 
-    const invalid = validateTaskCreateBody(
-      { title: "t", task_type: "hacking" },
-      normalize,
-    );
+    const invalid = validateTaskCreateBody({ title: "t", task_type: "hacking" }, normalize);
     expect(invalid.ok).toBe(false);
     if (!invalid.ok) expect(invalid.error).toBe("invalid_task_type");
   });
 
   it("clamps priority to safe range", () => {
-    const result = validateTaskCreateBody(
-      { title: "t", priority: 9999 },
-      normalize,
-    );
+    const result = validateTaskCreateBody({ title: "t", priority: 9999 }, normalize);
     expect(result.ok).toBe(true);
     if (result.ok) expect(result.data.priority).toBe(1000);
   });
 
   it("coerces workflow_meta_json from object to string", () => {
-    const result = validateTaskCreateBody(
-      { title: "t", workflow_meta_json: { key: "value" } },
-      normalize,
-    );
+    const result = validateTaskCreateBody({ title: "t", workflow_meta_json: { key: "value" } }, normalize);
     expect(result.ok).toBe(true);
     if (result.ok) expect(result.data.workflow_meta_json).toBe('{"key":"value"}');
   });

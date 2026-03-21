@@ -14,22 +14,15 @@ type ScheduleRow = {
   next_trigger_at: number;
 };
 
-export function checkAndFireSchedules(
-  db: DatabaseSync,
-  broadcast: (type: string, data: unknown) => void,
-): void {
+export function checkAndFireSchedules(db: DatabaseSync, broadcast: (type: string, data: unknown) => void): void {
   const now = Date.now();
   const dueSchedules = db
-    .prepare(
-      `SELECT * FROM task_schedules WHERE enabled = 1 AND next_trigger_at <= ?`,
-    )
+    .prepare(`SELECT * FROM task_schedules WHERE enabled = 1 AND next_trigger_at <= ?`)
     .all(now) as ScheduleRow[];
 
   for (const schedule of dueSchedules) {
     const today = new Date().toISOString().slice(0, 10);
-    const title = schedule.title_template
-      .replace(/\{\{date\}\}/g, today)
-      .replace(/\{\{YYYY-MM-DD\}\}/g, today);
+    const title = schedule.title_template.replace(/\{\{date\}\}/g, today).replace(/\{\{YYYY-MM-DD\}\}/g, today);
     const rawDesc = schedule.description_template ?? "";
     const description = rawDesc.replace(/\{\{date\}\}/g, today) || null;
 
@@ -52,15 +45,15 @@ export function checkAndFireSchedules(
     );
 
     // Advance next trigger by interval_days
-    const nextTrigger =
-      schedule.next_trigger_at + schedule.interval_days * 24 * 60 * 60 * 1000;
-    db.prepare(
-      `UPDATE task_schedules SET last_triggered_at = ?, next_trigger_at = ?, updated_at = ? WHERE id = ?`,
-    ).run(now, nextTrigger, now, schedule.id);
+    const nextTrigger = schedule.next_trigger_at + schedule.interval_days * 24 * 60 * 60 * 1000;
+    db.prepare(`UPDATE task_schedules SET last_triggered_at = ?, next_trigger_at = ?, updated_at = ? WHERE id = ?`).run(
+      now,
+      nextTrigger,
+      now,
+      schedule.id,
+    );
 
     broadcast("task_created", { id: taskId, title, status: "planned" });
-    console.log(
-      `[Scheduler] Created task "${title}" from schedule ${schedule.id}`,
-    );
+    console.log(`[Scheduler] Created task "${title}" from schedule ${schedule.id}`);
   }
 }

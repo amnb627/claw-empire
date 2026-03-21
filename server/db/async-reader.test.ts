@@ -32,9 +32,7 @@ describe("createDirectAsyncReader", () => {
 
   it("resolves with all rows when no params", async () => {
     const reader = createDirectAsyncReader(db);
-    const rows = await reader.query<{ id: number; name: string; value: number }>(
-      "SELECT * FROM items ORDER BY id ASC",
-    );
+    const rows = await reader.query<{ id: number; name: string; value: number }>("SELECT * FROM items ORDER BY id ASC");
     expect(rows).toHaveLength(3);
     expect(rows[0]).toMatchObject({ name: "alpha", value: 10 });
     expect(rows[2]).toMatchObject({ name: "gamma", value: 30 });
@@ -42,10 +40,7 @@ describe("createDirectAsyncReader", () => {
 
   it("resolves with filtered rows when params provided", async () => {
     const reader = createDirectAsyncReader(db);
-    const rows = await reader.query<{ name: string }>(
-      "SELECT name FROM items WHERE value > ?",
-      [15],
-    );
+    const rows = await reader.query<{ name: string }>("SELECT name FROM items WHERE value > ?", [15]);
     expect(rows).toHaveLength(2);
     expect(rows.map((r) => r.name)).toEqual(["beta", "gamma"]);
   });

@@ -38,6 +38,11 @@ interface CreateTaskModalViewProps {
   // Output path props
   outputPath: string;
   defaultOutputPath: string;
+  // Context files props
+  contextFiles: string[];
+  onAddContextFile: () => void;
+  onUpdateContextFile: (index: number, value: string) => void;
+  onRemoveContextFile: (index: number) => void;
   onOpenDraftModal: () => void;
   onRequestClose: () => void;
   onSubmit: FormEventHandler<HTMLFormElement>;
@@ -83,6 +88,10 @@ export default function CreateTaskModalView({
   assembledPrompt,
   outputPath,
   defaultOutputPath,
+  contextFiles,
+  onAddContextFile,
+  onUpdateContextFile,
+  onRemoveContextFile,
   onOpenDraftModal,
   onRequestClose,
   onSubmit,
@@ -187,7 +196,12 @@ export default function CreateTaskModalView({
                 </select>
                 {packSchemaLoading && (
                   <p className="mt-1 text-xs text-slate-500">
-                    {t({ ko: "스키마 불러오는 중...", en: "Loading schema...", ja: "スキーマ読込中...", zh: "加载中..." })}
+                    {t({
+                      ko: "스키마 불러오는 중...",
+                      en: "Loading schema...",
+                      ja: "スキーマ読込中...",
+                      zh: "加载中...",
+                    })}
                   </p>
                 )}
               </div>
@@ -288,12 +302,15 @@ export default function CreateTaskModalView({
                     type="text"
                     value={outputPath}
                     onChange={(event) => onOutputPathChange(event.target.value)}
-                    placeholder={defaultOutputPath || t({
-                      ko: "예: /path/to/claw_output/",
-                      en: "e.g. /path/to/claw_output/",
-                      ja: "例: /path/to/claw_output/",
-                      zh: "例如: /path/to/claw_output/",
-                    })}
+                    placeholder={
+                      defaultOutputPath ||
+                      t({
+                        ko: "예: /path/to/claw_output/",
+                        en: "e.g. /path/to/claw_output/",
+                        ja: "例: /path/to/claw_output/",
+                        zh: "例如: /path/to/claw_output/",
+                      })
+                    }
                     data-testid="output-path-input"
                     className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white placeholder-slate-500 outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                   />
@@ -314,6 +331,60 @@ export default function CreateTaskModalView({
                     </button>
                   )}
                 </div>
+              </div>
+
+              {/* Context Files */}
+              <div data-testid="context-files-section">
+                <label className="mb-1 block text-sm font-medium text-slate-300">
+                  {t({ ko: "컨텍스트 파일", en: "Context Files", ja: "コンテキストファイル", zh: "上下文文件" })}
+                  <span className="ml-1 text-xs font-normal text-slate-500">
+                    {t({ ko: "(선택)", en: "(optional)", ja: "(任意)", zh: "(可选)" })}
+                  </span>
+                </label>
+                <div className="space-y-1">
+                  {contextFiles.map((f, i) => (
+                    <div key={i} className="flex gap-2">
+                      <input
+                        type="text"
+                        value={f}
+                        onChange={(e) => onUpdateContextFile(i, e.target.value)}
+                        placeholder={t({
+                          ko: "C:\\경로\\파일.md",
+                          en: "C:\\path\\to\\file.md",
+                          ja: "C:\\パス\\ファイル.md",
+                          zh: "C:\\路径\\文件.md",
+                        })}
+                        data-testid={`context-file-input-${i}`}
+                        className="flex-1 rounded-lg border border-slate-700 bg-slate-800 px-2 py-1.5 text-xs text-slate-200 placeholder-slate-500 outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => onRemoveContextFile(i)}
+                        data-testid={`context-file-remove-${i}`}
+                        className="rounded px-1.5 text-slate-500 transition hover:text-red-400"
+                        title={t({ ko: "제거", en: "Remove", ja: "削除", zh: "删除" })}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={onAddContextFile}
+                    data-testid="context-file-add"
+                    className="text-xs text-blue-400 transition hover:text-blue-300"
+                  >
+                    {t({ ko: "+ 파일 추가", en: "+ Add context file", ja: "+ ファイル追加", zh: "+ 添加文件" })}
+                  </button>
+                </div>
+                <p className="mt-1 text-xs text-slate-600">
+                  {t({
+                    ko: "파일은 태스크 실행 시 읽혀 에이전트 컨텍스트에 주입됩니다",
+                    en: "Files are read at task spawn time and injected into the agent's context",
+                    ja: "ファイルはタスク実行時に読み込まれエージェントのコンテキストに注入されます",
+                    zh: "文件在任务启动时读取并注入到代理上下文中",
+                  })}
+                </p>
               </div>
 
               <div className={createNewProjectMode ? "lg:hidden" : ""}>

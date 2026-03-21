@@ -81,7 +81,8 @@ export function calculateXp(ctx: XpContext): XpBreakdown {
  * and counts how many consecutive 'done' or 'review' statuses from the top.
  */
 export function countAgentStreak(
-  db: { prepare: (sql: string) => { all: (...args: unknown[]) => Array<{ status: string }> } },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  db: { prepare: (sql: string) => { all: (...args: any[]) => Array<{ status: string }> } },
   agentId: string,
   limit = 10,
 ): number {
@@ -106,7 +107,8 @@ export function countAgentStreak(
  * Query helper: count subtasks for a task.
  */
 export function countSubtasks(
-  db: { prepare: (sql: string) => { get: (...args: unknown[]) => { cnt: number } | undefined } },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  db: { prepare: (sql: string) => { get: (...args: any[]) => { cnt: number } | undefined } },
   taskId: string,
 ): number {
   const row = db.prepare("SELECT COUNT(*) AS cnt FROM subtasks WHERE task_id = ?").get(taskId);

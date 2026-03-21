@@ -123,8 +123,7 @@ function PackForm({ t, isEdit, editKey, form, setForm, saving, saveError, onSave
   const labelCls = "block text-xs mb-1";
   const labelStyle = { color: "var(--th-text-secondary)" };
 
-  const keyInvalid =
-    form.key.length > 0 && !/^[a-z][a-z0-9_]*$/.test(form.key);
+  const keyInvalid = form.key.length > 0 && !/^[a-z][a-z0-9_]*$/.test(form.key);
 
   return (
     <div
@@ -178,7 +177,12 @@ function PackForm({ t, isEdit, editKey, form, setForm, saving, saveError, onSave
           type="text"
           value={form.name}
           onChange={(e) => setForm({ ...form, name: e.target.value })}
-          placeholder={t({ ko: "예: 시설 방문 준비", en: "e.g. Facility Visit Prep", ja: "例: 施設訪問準備", zh: "例如：设施访问准备" })}
+          placeholder={t({
+            ko: "예: 시설 방문 준비",
+            en: "e.g. Facility Visit Prep",
+            ja: "例: 施設訪問準備",
+            zh: "例如：设施访问准备",
+          })}
           className={inputCls}
           style={inputStyle}
         />
@@ -275,7 +279,11 @@ function PackForm({ t, isEdit, editKey, form, setForm, saving, saveError, onSave
           onClick={onCancel}
           disabled={saving}
           className="px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
-          style={{ background: "var(--th-input-bg)", color: "var(--th-text-secondary)", border: "1px solid var(--th-card-border)" }}
+          style={{
+            background: "var(--th-input-bg)",
+            color: "var(--th-text-secondary)",
+            border: "1px solid var(--th-card-border)",
+          }}
         >
           {t({ ko: "취소", en: "Cancel", ja: "キャンセル", zh: "取消" })}
         </button>
@@ -374,7 +382,11 @@ function PackAnalyticsPanel({ packKey, t }: PackAnalyticsPanelProps) {
               }`}
               style={
                 period !== d
-                  ? { background: "var(--th-input-bg)", color: "var(--th-text-secondary)", border: "1px solid var(--th-card-border)" }
+                  ? {
+                      background: "var(--th-input-bg)",
+                      color: "var(--th-text-secondary)",
+                      border: "1px solid var(--th-card-border)",
+                    }
                   : {}
               }
             >
@@ -416,17 +428,10 @@ function PackAnalyticsPanel({ packKey, t }: PackAnalyticsPanelProps) {
               },
               {
                 label: t({ ko: "평균 시간", en: "Avg time", ja: "平均時間", zh: "平均时间" }),
-                value:
-                  analytics.avg_completion_ms !== null
-                    ? formatDuration(analytics.avg_completion_ms)
-                    : "—",
+                value: analytics.avg_completion_ms !== null ? formatDuration(analytics.avg_completion_ms) : "—",
               },
             ].map(({ label, value }) => (
-              <div
-                key={label}
-                className="rounded p-2 text-center"
-                style={{ background: "var(--th-input-bg)" }}
-              >
+              <div key={label} className="rounded p-2 text-center" style={{ background: "var(--th-input-bg)" }}>
                 <div className="font-semibold" style={{ color: "var(--th-text-primary)" }}>
                   {value}
                 </div>
@@ -444,8 +449,7 @@ function PackAnalyticsPanel({ packKey, t }: PackAnalyticsPanelProps) {
               <ul className="space-y-0.5">
                 {analytics.top_revision_reasons.map((r) => (
                   <li key={r.normalized_note} style={{ color: "var(--th-text-secondary)" }}>
-                    <span className="text-orange-400 font-medium">×{r.count}</span>{" "}
-                    {r.normalized_note}
+                    <span className="text-orange-400 font-medium">×{r.count}</span> {r.normalized_note}
                   </li>
                 ))}
               </ul>
@@ -467,9 +471,7 @@ function PackAnalyticsPanel({ packKey, t }: PackAnalyticsPanelProps) {
                   >
                     <span>{statusIcon(task.status)}</span>
                     <span className="flex-1 truncate">{task.title}</span>
-                    <span style={{ color: "var(--th-text-muted, #94a3b8)" }}>
-                      {timeAgo(task.created_at)}
-                    </span>
+                    <span style={{ color: "var(--th-text-muted, #94a3b8)" }}>{timeAgo(task.created_at)}</span>
                   </li>
                 ))}
               </ul>
@@ -478,7 +480,12 @@ function PackAnalyticsPanel({ packKey, t }: PackAnalyticsPanelProps) {
 
           {analytics.total === 0 && (
             <p style={{ color: "var(--th-text-muted, #94a3b8)" }}>
-              {t({ ko: "이 기간에 작업 없음.", en: "No tasks in this period.", ja: "この期間にタスクなし。", zh: "该期间无任务。" })}
+              {t({
+                ko: "이 기간에 작업 없음.",
+                en: "No tasks in this period.",
+                ja: "この期間にタスクなし。",
+                zh: "该期间无任务。",
+              })}
             </p>
           )}
         </>
@@ -632,20 +639,17 @@ export default function WorkflowPacksTab({ t }: WorkflowPacksTabProps) {
   }, [loadPacks]);
 
   // ---- Toggle ----
-  const handleToggle = useCallback(
-    async (pack: WorkflowPackConfig) => {
-      setTogglingKey(pack.key);
-      try {
-        await api.updateWorkflowPack(pack.key, { enabled: !pack.enabled });
-        setPacks((prev) => prev.map((p) => (p.key === pack.key ? { ...p, enabled: !pack.enabled } : p)));
-      } catch (err) {
-        console.error("Toggle failed:", err);
-      } finally {
-        setTogglingKey(null);
-      }
-    },
-    [],
-  );
+  const handleToggle = useCallback(async (pack: WorkflowPackConfig) => {
+    setTogglingKey(pack.key);
+    try {
+      await api.updateWorkflowPack(pack.key, { enabled: !pack.enabled });
+      setPacks((prev) => prev.map((p) => (p.key === pack.key ? { ...p, enabled: !pack.enabled } : p)));
+    } catch (err) {
+      console.error("Toggle failed:", err);
+    } finally {
+      setTogglingKey(null);
+    }
+  }, []);
 
   // ---- Open form ----
   const handleNewPack = useCallback(() => {
@@ -672,7 +676,9 @@ export default function WorkflowPacksTab({ t }: WorkflowPacksTabProps) {
   const handleSave = useCallback(async () => {
     setSaveError(null);
     if (!form.name.trim()) {
-      setSaveError(t({ ko: "이름은 필수입니다.", en: "Name is required.", ja: "名前は必須です。", zh: "名称为必填项。" }));
+      setSaveError(
+        t({ ko: "이름은 필수입니다.", en: "Name is required.", ja: "名前は必須です。", zh: "名称为必填项。" }),
+      );
       return;
     }
     if (!editKey && !form.key.trim()) {
@@ -770,7 +776,10 @@ export default function WorkflowPacksTab({ t }: WorkflowPacksTabProps) {
 
   if (loadError) {
     return (
-      <div className="rounded-xl p-5 text-center" style={{ background: "var(--th-card-bg)", border: "1px solid var(--th-card-border)" }}>
+      <div
+        className="rounded-xl p-5 text-center"
+        style={{ background: "var(--th-card-bg)", border: "1px solid var(--th-card-border)" }}
+      >
         <p className="text-sm text-red-400" role="alert">
           {t({ ko: "오류:", en: "Error:", ja: "エラー:", zh: "错误：" })} {loadError}
         </p>

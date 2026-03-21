@@ -26,14 +26,7 @@ const VALID_STATUSES = new Set([
   "pending",
 ]);
 
-const VALID_TASK_TYPES = new Set([
-  "general",
-  "development",
-  "design",
-  "analysis",
-  "presentation",
-  "documentation",
-]);
+const VALID_TASK_TYPES = new Set(["general", "development", "design", "analysis", "presentation", "documentation"]);
 
 export interface TaskCreateInput {
   title: string;
@@ -55,12 +48,7 @@ export interface TaskCreateInput {
 /**
  * Parse a value as a bounded positive integer, returning a fallback on failure.
  */
-export function parseBoundedInt(
-  value: unknown,
-  fallback: number,
-  min: number,
-  max: number,
-): number {
+export function parseBoundedInt(value: unknown, fallback: number, min: number, max: number): number {
   if (value === null || value === undefined) return fallback;
   const num = typeof value === "number" ? value : Number(value);
   if (!Number.isFinite(num)) return fallback;
@@ -70,10 +58,7 @@ export function parseBoundedInt(
 /**
  * Truncate a string field to a maximum length, returning null if empty.
  */
-export function truncateField(
-  value: unknown,
-  maxLength: number,
-): string | null {
+export function truncateField(value: unknown, maxLength: number): string | null {
   if (value === null || value === undefined) return null;
   if (typeof value !== "string") return null;
   const trimmed = value.trim();
@@ -121,10 +106,7 @@ export function validateTaskCreateBody(
   if (typeof b.workflow_meta_json === "string") {
     workflowMetaJson = truncateField(b.workflow_meta_json, LIMITS.workflowMetaJson);
   } else if (b.workflow_meta_json != null && typeof b.workflow_meta_json === "object") {
-    workflowMetaJson = truncateField(
-      JSON.stringify(b.workflow_meta_json),
-      LIMITS.workflowMetaJson,
-    );
+    workflowMetaJson = truncateField(JSON.stringify(b.workflow_meta_json), LIMITS.workflowMetaJson);
   }
 
   return {

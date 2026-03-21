@@ -27,7 +27,11 @@ function buildDb(schedules: Array<Record<string, unknown>> = []) {
         }
         if (sql.includes("UPDATE task_schedules")) {
           const [last_triggered_at, next_trigger_at, , id] = args;
-          updatedSchedules.push({ id: id as string, next_trigger_at: next_trigger_at as number, last_triggered_at: last_triggered_at as number });
+          updatedSchedules.push({
+            id: id as string,
+            next_trigger_at: next_trigger_at as number,
+            last_triggered_at: last_triggered_at as number,
+          });
         }
       },
     }),
@@ -138,10 +142,7 @@ describe("checkAndFireSchedules", () => {
     checkAndFireSchedules(db as any, broadcast);
 
     expect(db._tasks[0]!.title).toBe(`Audit ${today}`);
-    expect(broadcast).toHaveBeenCalledWith(
-      "task_created",
-      expect.objectContaining({ title: `Audit ${today}` }),
-    );
+    expect(broadcast).toHaveBeenCalledWith("task_created", expect.objectContaining({ title: `Audit ${today}` }));
   });
 
   it("fires multiple due schedules in one call", () => {

@@ -452,6 +452,24 @@ const PACK_PRESETS: Record<WorkflowPackKey, PackPreset> = {
       nonLeaderDeptCycle: ["planning", "design", "dev", "design", "qa", "planning", "operations", "design"],
     },
   },
+  facility_visit: {
+    key: "facility_visit",
+    slug: "FV",
+    label: {
+      ko: "시설 방문 오피스",
+      en: "Facility Visit Office",
+      ja: "施設訪問オフィス",
+      zh: "设施访问办公室",
+    },
+    summary: {
+      ko: "현장 방문 및 점검 업무 중심",
+      en: "On-site facility visit and inspection workflow",
+      ja: "施設訪問・点検業務向け",
+      zh: "现场设施访问与检查工作流",
+    },
+    roomThemes: DEV_THEMES,
+    departments: {},
+  },
 };
 
 export function normalizeOfficeWorkflowPack(value: unknown): WorkflowPackKey {

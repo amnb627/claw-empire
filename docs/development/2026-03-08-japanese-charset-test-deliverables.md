@@ -29,23 +29,19 @@ src/i18n/
 
 ### 提供する文字セット
 
-| カテゴリ | 説明 | 主な用途 |
-|:--------|:-----|:---------|
-| 基本文字 | ひらがな、カタカナ、基本漢字 | 一般的な日本語テキスト検証 |
-| 全角・半角 | 全角英数字、全角記号、半角カナ | フォーム入力、データベース保存 |
-| 絵文字 | 基本絵文字、国旗、シンボル | チャット、コメント機能 |
-| 特殊文字 | サロゲートペア、IVS、機種依存文字 | 人名、住所、特殊表現 |
-| フォーマット | 電話番号、郵便番号、住所、日付 | データ入力・表示検証 |
-| 組み合わせ | 各バイト長混在、絵文字混在 | 実際の使用ケースシミュレーション |
+| カテゴリ     | 説明                              | 主な用途                         |
+| :----------- | :-------------------------------- | :------------------------------- |
+| 基本文字     | ひらがな、カタカナ、基本漢字      | 一般的な日本語テキスト検証       |
+| 全角・半角   | 全角英数字、全角記号、半角カナ    | フォーム入力、データベース保存   |
+| 絵文字       | 基本絵文字、国旗、シンボル        | チャット、コメント機能           |
+| 特殊文字     | サロゲートペア、IVS、機種依存文字 | 人名、住所、特殊表現             |
+| フォーマット | 電話番号、郵便番号、住所、日付    | データ入力・表示検証             |
+| 組み合わせ   | 各バイト長混在、絵文字混在        | 実際の使用ケースシミュレーション |
 
 ### 使用方法
 
 ```typescript
-import {
-  JapaneseCharsetTestSet,
-  verifyUtf8Encoding,
-  runAllCharsetTests,
-} from "./i18n/japanese-charset.test";
+import { JapaneseCharsetTestSet, verifyUtf8Encoding, runAllCharsetTests } from "./i18n/japanese-charset.test";
 
 // 基本的な使用
 const result = verifyUtf8Encoding("テスト文字列", "category-name");
@@ -99,17 +95,17 @@ scripts/
 
 以下の各層のエンコーディング設定を一括チェックします。
 
-| チェック項目 | 説明 |
-|:------------|:-----|
-| Project | package.json、tsconfig.json |
-| Build | Vite設定 |
-| Frontend | HTML/CSSのcharset宣言、コンポーネントエンコーディング |
-| Backend | Express/APIのContent-Type設定 |
-| Database | データベース接続文字列のcharset設定 |
-| VCS | .gitattributesの設定 |
-| CI/CD | GitHub Actions等のワークフロー設定 |
-| Infrastructure | Dockerfileの環境変数設定 |
-| Runtime | 実行環境のLANG/LC_ALL設定 |
+| チェック項目   | 説明                                                  |
+| :------------- | :---------------------------------------------------- |
+| Project        | package.json、tsconfig.json                           |
+| Build          | Vite設定                                              |
+| Frontend       | HTML/CSSのcharset宣言、コンポーネントエンコーディング |
+| Backend        | Express/APIのContent-Type設定                         |
+| Database       | データベース接続文字列のcharset設定                   |
+| VCS            | .gitattributesの設定                                  |
+| CI/CD          | GitHub Actions等のワークフロー設定                    |
+| Infrastructure | Dockerfileの環境変数設定                              |
+| Runtime        | 実行環境のLANG/LC_ALL設定                             |
 
 ### 使用方法
 
@@ -168,7 +164,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: '22'
+          node-version: "22"
       - run: node scripts/check-encoding.mjs
 ```
 
@@ -186,15 +182,15 @@ server/security/
 
 ### 機能
 
-| 機能 | 説明 |
-|:-----|:-----|
-| パターン検出 | Shift-JIS化け、Replacement Character、機種依存文字等を検出 |
-| 重大度レベル | DEBUG/INFO/WARN/ERROR/CRITICALの5段階 |
-| 履歴管理 | 検出履歴の記録・統計取得 |
-| オブジェクト検査 | JSON・オブジェクト内の全文字列を再帰的に検査 |
-| APIバリデーション | リクエスト/レスポンスデータの検証 |
-| WebSocket検証 | WebSocketメッセージの検証 |
-| ヘルスチェック | システム全体のエンコーディング健全性チェック |
+| 機能              | 説明                                                       |
+| :---------------- | :--------------------------------------------------------- |
+| パターン検出      | Shift-JIS化け、Replacement Character、機種依存文字等を検出 |
+| 重大度レベル      | DEBUG/INFO/WARN/ERROR/CRITICALの5段階                      |
+| 履歴管理          | 検出履歴の記録・統計取得                                   |
+| オブジェクト検査  | JSON・オブジェクト内の全文字列を再帰的に検査               |
+| APIバリデーション | リクエスト/レスポンスデータの検証                          |
+| WebSocket検証     | WebSocketメッセージの検証                                  |
+| ヘルスチェック    | システム全体のエンコーディング健全性チェック               |
 
 ### 使用方法
 
@@ -231,14 +227,14 @@ for (const issue of objectIssues) {
 
 ### 検出パターン
 
-| パターン名 | 説明 | 重大度 |
-|:----------|:-----|:-------|
-| replacement-character | でコード失敗したReplacement Character | ERROR |
-| invalid-utf8-sequence | 無効なUTF-8シーケンス | ERROR |
-| shift-jis-double-accent | Shift-JIS誤デコードのダブルアクセント | WARN |
-| shift-jis-cedilla | Shift-JIS誤デコードのセディラ | WARN |
-| excess-device-dependent | 機種依存文字の過度な使用 | INFO |
-| bom-detected | BOM（Byte Order Mark）検出 | INFO |
+| パターン名              | 説明                                  | 重大度 |
+| :---------------------- | :------------------------------------ | :----- |
+| replacement-character   | でコード失敗したReplacement Character | ERROR  |
+| invalid-utf8-sequence   | 無効なUTF-8シーケンス                 | ERROR  |
+| shift-jis-double-accent | Shift-JIS誤デコードのダブルアクセント | WARN   |
+| shift-jis-cedilla       | Shift-JIS誤デコードのセディラ         | WARN   |
+| excess-device-dependent | 機種依存文字の過度な使用              | INFO   |
+| bom-detected            | BOM（Byte Order Mark）検出            | INFO   |
 
 ### 定期ヘルスチェック
 
@@ -309,13 +305,13 @@ npm test -- mojibake-detector
 
 ### エンコーディング方針
 
-| レイヤー | 設定値 |
-|:--------|:-------|
-| フロントエンド | UTF-8 (HTML: `<meta charset="UTF-8">`) |
-| API | UTF-8 (Content-Type: application/json; charset=utf-8) |
-| データベース | UTF-8 (charset: utf8mb4) |
-| ソースコード | UTF-8 (BOMなし) |
-| Git | text=auto, eol=lf |
+| レイヤー       | 設定値                                                |
+| :------------- | :---------------------------------------------------- |
+| フロントエンド | UTF-8 (HTML: `<meta charset="UTF-8">`)                |
+| API            | UTF-8 (Content-Type: application/json; charset=utf-8) |
+| データベース   | UTF-8 (charset: utf8mb4)                              |
+| ソースコード   | UTF-8 (BOMなし)                                       |
+| Git            | text=auto, eol=lf                                     |
 
 ### 対応範囲
 
@@ -334,23 +330,23 @@ npm test -- mojibake-detector
 
 ## ファイルパス一覧
 
-| ファイル | 説明 |
-|:--------|:-----|
-| `src/i18n/japanese-charset.test.ts` | テスト文字列セット定義 |
-| `src/i18n/japanese-charset-validation.test.ts` | UTF-8検証テスト |
-| `scripts/check-encoding.mjs` | エンコーディング設定確認スクリプト |
-| `server/security/mojibake-detector.ts` | 文字化け検出ユーティリティ |
-| `server/security/mojibake-detector.test.ts` | 文字化け検出テスト |
-| `docs/development/2026-03-08-japanese-charset-test-deliverables.md` | 本ドキュメント |
+| ファイル                                                            | 説明                               |
+| :------------------------------------------------------------------ | :--------------------------------- |
+| `src/i18n/japanese-charset.test.ts`                                 | テスト文字列セット定義             |
+| `src/i18n/japanese-charset-validation.test.ts`                      | UTF-8検証テスト                    |
+| `scripts/check-encoding.mjs`                                        | エンコーディング設定確認スクリプト |
+| `server/security/mojibake-detector.ts`                              | 文字化け検出ユーティリティ         |
+| `server/security/mojibake-detector.test.ts`                         | 文字化け検出テスト                 |
+| `docs/development/2026-03-08-japanese-charset-test-deliverables.md` | 本ドキュメント                     |
 
 ---
 
 ## 変更履歴
 
-| 日付 | 変更内容 |
-|:-----|:---------|
+| 日付       | 変更内容 |
+| :--------- | :------- |
 | 2026-03-08 | 初版作成 |
 
 ---
 
-*本ドキュメントは開発チームの成果物です。他チームからのフィードバックをお待ちしております。*
+_本ドキュメントは開発チームの成果物です。他チームからのフィードバックをお待ちしております。_

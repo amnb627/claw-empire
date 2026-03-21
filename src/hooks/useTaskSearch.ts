@@ -16,9 +16,7 @@ export function useTaskSearch(tasks: Task[], filter: TaskFilter): Task[] {
     if (filter.query.trim()) {
       const q = filter.query.toLowerCase();
       result = result.filter(
-        (t) =>
-          t.title.toLowerCase().includes(q) ||
-          (t.description ?? "").toLowerCase().includes(q),
+        (t) => t.title.toLowerCase().includes(q) || (t.description ?? "").toLowerCase().includes(q),
       );
     }
 
@@ -27,15 +25,11 @@ export function useTaskSearch(tasks: Task[], filter: TaskFilter): Task[] {
     }
 
     if (filter.packKey.length > 0) {
-      result = result.filter((t) =>
-        filter.packKey.includes(t.workflow_pack_key ?? ""),
-      );
+      result = result.filter((t) => filter.packKey.includes(t.workflow_pack_key ?? ""));
     }
 
     if (filter.projectId.length > 0) {
-      result = result.filter((t) =>
-        filter.projectId.includes(t.project_id ?? ""),
-      );
+      result = result.filter((t) => filter.projectId.includes(t.project_id ?? ""));
     }
 
     if (filter.priority !== null) {

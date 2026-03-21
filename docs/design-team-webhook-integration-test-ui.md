@@ -96,47 +96,73 @@ flowchart TD
 
 ### 2.2 ステータスインジケーター定義
 
-| ステータス | アイコン | 色 | アニメーション | 説明 |
-|:---------|:--------|:---|:-------------|:-----|
-| **成功** | ✅ | Green-500 | `success-pop` | テスト合格 |
-| **失敗** | 🔴 | Red-500 | `error-shake` | テスト不合格 |
-| **リトライ中** | 🟡 | Amber-500 | `retry-pulse` | 再試行中 |
-| **実行中** | ⏳ | Blue-500 | `progress-spin` | テスト実行中 |
-| **スキップ** | ⏭️ | Gray-400 | - | テスト skipped |
+| ステータス     | アイコン | 色        | アニメーション  | 説明           |
+| :------------- | :------- | :-------- | :-------------- | :------------- |
+| **成功**       | ✅       | Green-500 | `success-pop`   | テスト合格     |
+| **失敗**       | 🔴       | Red-500   | `error-shake`   | テスト不合格   |
+| **リトライ中** | 🟡       | Amber-500 | `retry-pulse`   | 再試行中       |
+| **実行中**     | ⏳       | Blue-500  | `progress-spin` | テスト実行中   |
+| **スキップ**   | ⏭️       | Gray-400  | -               | テスト skipped |
 
 ### 2.3 ステータスアニメーション定義
 
 ```css
 /* 成功時のポップアニメーション */
 @keyframes success-pop {
-  0% { transform: scale(0); }
-  50% { transform: scale(1.2); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(0);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 /* 失敗時のシェイクアニメーション */
 @keyframes error-shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-4px); }
-  75% { transform: translateX(4px); }
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-4px);
+  }
+  75% {
+    transform: translateX(4px);
+  }
 }
 
 /* リトライ中のパルスアニメーション */
 @keyframes retry-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
 /* 実行中のスピナーアニメーション */
 @keyframes progress-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* リトライカウントダウン */
 @keyframes countdown-shrink {
-  from { width: 100%; }
-  to { width: 0%; }
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
 }
 ```
 
@@ -345,21 +371,21 @@ flowchart TD
 
 ```css
 /* Webhookステータス色 */
---webhook-success: #10b981;      /* Green-500 */
+--webhook-success: #10b981; /* Green-500 */
 --webhook-success-bg: rgba(16, 185, 129, 0.1);
---webhook-error: #ef4444;        /* Red-500 */
+--webhook-error: #ef4444; /* Red-500 */
 --webhook-error-bg: rgba(239, 68, 68, 0.1);
---webhook-retrying: #f59e0b;     /* Amber-500 */
+--webhook-retrying: #f59e0b; /* Amber-500 */
 --webhook-retrying-bg: rgba(245, 158, 11, 0.1);
---webhook-running: #3b82f6;      /* Blue-500 */
+--webhook-running: #3b82f6; /* Blue-500 */
 --webhook-running-bg: rgba(59, 130, 246, 0.1);
---webhook-skipped: #9ca3af;      /* Gray-400 */
+--webhook-skipped: #9ca3af; /* Gray-400 */
 
 /* プライオリティ色 */
---priority-critical: #dc2626;    /* Red-600 */
---priority-high: #ea580c;        /* Orange-600 */
---priority-medium: #ca8a04;      /* Yellow-600 */
---priority-low: #64748b;         /* Slate-500 */
+--priority-critical: #dc2626; /* Red-600 */
+--priority-high: #ea580c; /* Orange-600 */
+--priority-medium: #ca8a04; /* Yellow-600 */
+--priority-low: #64748b; /* Slate-500 */
 
 /* リトライプログレスバー */
 --retry-progress-bg: #f59e0b;
@@ -372,12 +398,12 @@ flowchart TD
 
 ### 6.2 既存コンポーネントとの整合性
 
-| 既存クラス | Webhookテスト用途 |
-|:-----------|:------------------|
-| `.glass-panel` | テスト結果カード背景 |
-| `.dash-card` | テスト項目カード |
-| `.task-status-badge` | ステータスバッジ（拡張） |
-| `.notification-toast` | トースト通知（拡張） |
+| 既存クラス            | Webhookテスト用途        |
+| :-------------------- | :----------------------- |
+| `.glass-panel`        | テスト結果カード背景     |
+| `.dash-card`          | テスト項目カード         |
+| `.task-status-badge`  | ステータスバッジ（拡張） |
+| `.notification-toast` | トースト通知（拡張）     |
 
 ---
 
@@ -389,8 +415,8 @@ flowchart TD
 interface WebhookTestCardProps {
   testId: string;
   testName: string;
-  category: 'P0' | 'P1' | 'P2';
-  status: 'success' | 'error' | 'retrying' | 'running' | 'skipped';
+  category: "P0" | "P1" | "P2";
+  status: "success" | "error" | "retrying" | "running" | "skipped";
   timestamp: Date;
   duration?: number;
   errorMessage?: string;
@@ -411,7 +437,7 @@ interface WebhookTestCardProps {
   errorMessage="署名検証が実装されていません"
   expected="401 Unauthorized"
   actual="200 OK"
-/>
+/>;
 ```
 
 ### 7.2 RetryIndicator
@@ -420,10 +446,10 @@ interface WebhookTestCardProps {
 interface RetryIndicatorProps {
   currentRetry: number;
   maxRetries: number;
-  nextRetryIn: number;  // 秒
+  nextRetryIn: number; // 秒
   retryHistory: {
     attempt: number;
-    status: 'success' | 'error';
+    status: "success" | "error";
     duration: number;
     error?: string;
   }[];
@@ -435,10 +461,10 @@ interface RetryIndicatorProps {
   maxRetries={3}
   nextRetryIn={12}
   retryHistory={[
-    { attempt: 1, status: 'error', duration: 5000, error: 'Timeout' },
-    { attempt: 2, status: 'running', duration: 0 }
+    { attempt: 1, status: "error", duration: 5000, error: "Timeout" },
+    { attempt: 2, status: "running", duration: 0 },
   ]}
-/>
+/>;
 ```
 
 ### 7.3 ErrorAlertDialog
@@ -450,7 +476,7 @@ interface ErrorAlertDialogProps {
   errors: Array<{
     testId: string;
     testName: string;
-    category: 'P0' | 'P1' | 'P2';
+    category: "P0" | "P1" | "P2";
     message: string;
     expected?: string;
     actual?: string;
@@ -467,8 +493,8 @@ interface ErrorAlertDialogProps {
     stackTrace?: string;
   }>;
   onRetry?: (testIds: string[]) => void;
-  onCopyLog?: (error: typeof errors[0]) => void;
-  onCreateIssue?: (error: typeof errors[0]) => void;
+  onCopyLog?: (error: (typeof errors)[0]) => void;
+  onCreateIssue?: (error: (typeof errors)[0]) => void;
 }
 ```
 
@@ -476,15 +502,15 @@ interface ErrorAlertDialogProps {
 
 ## 8. アニメーションタイミング
 
-| アニメーション | 持続時間 | イージング | 適用箇所 |
-|:-------------|:--------|:----------|:---------|
-| `success-pop` | 300ms | ease-out | 成功アイコン |
-| `error-shake` | 400ms | ease-in-out | 失敗アイコン |
-| `retry-pulse` | 1.5s | ease-in-out | リトライ中アイコン |
-| `progress-spin` | 1s | linear | 実行中スピナー |
-| `countdown-shrink` | リトライ間隔 | linear | プログレスバー |
-| `slide-in-right` | 300ms | ease-out | トースト通知 |
-| `fade-in` | 200ms | ease-in | モーダル表示 |
+| アニメーション     | 持続時間     | イージング  | 適用箇所           |
+| :----------------- | :----------- | :---------- | :----------------- |
+| `success-pop`      | 300ms        | ease-out    | 成功アイコン       |
+| `error-shake`      | 400ms        | ease-in-out | 失敗アイコン       |
+| `retry-pulse`      | 1.5s         | ease-in-out | リトライ中アイコン |
+| `progress-spin`    | 1s           | linear      | 実行中スピナー     |
+| `countdown-shrink` | リトライ間隔 | linear      | プログレスバー     |
+| `slide-in-right`   | 300ms        | ease-out    | トースト通知       |
+| `fade-in`          | 200ms        | ease-in     | モーダル表示       |
 
 ---
 
@@ -492,11 +518,11 @@ interface ErrorAlertDialogProps {
 
 ### 9.1 ブレイクポイント
 
-| サイズ | 幅 | レイアウト調整 |
-|:------|:---|:--------------|
-| モバイル | < 640px | カードを縦積み、アクションボタンをフル幅 |
-| タブレット | 640px - 1024px | 2カラムレイアウト |
-| デスクトップ | > 1024px | 3カラムレイアウト、詳細パネルを固定表示 |
+| サイズ       | 幅             | レイアウト調整                           |
+| :----------- | :------------- | :--------------------------------------- |
+| モバイル     | < 640px        | カードを縦積み、アクションボタンをフル幅 |
+| タブレット   | 640px - 1024px | 2カラムレイアウト                        |
+| デスクトップ | > 1024px       | 3カラムレイアウト、詳細パネルを固定表示  |
 
 ### 9.2 モバイル用調整
 
@@ -548,13 +574,13 @@ interface ErrorAlertDialogProps {
 
 ### 10.2 コンポーネントライブラリ
 
-| コンポーネント | Figmaフレーム | バリアント |
-|:--------------|:-------------|:----------|
-| TestCard | Components/Webhook/TestCard | Success, Error, Retrying, Running |
-| StatusBadge | Components/Webhook/StatusBadge | 5ステータス分 |
-| RetryIndicator | Components/Webhook/RetryIndicator | - |
-| ErrorDialog | Components/Webhook/ErrorDialog | Single, Multiple |
-| ToastNotification | Components/Webhook/Toast | Success, Error, Warning |
+| コンポーネント    | Figmaフレーム                     | バリアント                        |
+| :---------------- | :-------------------------------- | :-------------------------------- |
+| TestCard          | Components/Webhook/TestCard       | Success, Error, Retrying, Running |
+| StatusBadge       | Components/Webhook/StatusBadge    | 5ステータス分                     |
+| RetryIndicator    | Components/Webhook/RetryIndicator | -                                 |
+| ErrorDialog       | Components/Webhook/ErrorDialog    | Single, Multiple                  |
+| ToastNotification | Components/Webhook/Toast          | Success, Error, Warning           |
 
 ---
 
@@ -584,12 +610,12 @@ interface ErrorAlertDialogProps {
 
 ### 11.2 キーボード操作
 
-| キー | アクション |
-|:-----|:---------|
-| Enter | テスト実行 |
-| Esc | モーダルを閉じる |
-| Tab | フォーカス移動 |
-| Space | 選択/展開 |
+| キー  | アクション       |
+| :---- | :--------------- |
+| Enter | テスト実行       |
+| Esc   | モーダルを閉じる |
+| Tab   | フォーカス移動   |
+| Space | 選択/展開        |
 
 ---
 
@@ -597,13 +623,13 @@ interface ErrorAlertDialogProps {
 
 ### 12.1 実装優先順位
 
-| 優先度 | コンポーネント | 複雑度 |
-|:-------|:---------------|:-------|
-| P0 | WebhookTestCard | 中 |
-| P0 | StatusBadge | 低 |
-| P1 | ErrorAlertDialog | 中 |
-| P1 | RetryIndicator | 高 |
-| P2 | ToastNotification | 低 |
+| 優先度 | コンポーネント    | 複雑度 |
+| :----- | :---------------- | :----- |
+| P0     | WebhookTestCard   | 中     |
+| P0     | StatusBadge       | 低     |
+| P1     | ErrorAlertDialog  | 中     |
+| P1     | RetryIndicator    | 高     |
+| P2     | ToastNotification | 低     |
 
 ### 12.2 必要なアニメーション
 

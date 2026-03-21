@@ -11,7 +11,7 @@ export interface ParsedSection {
  * The section `name` is a normalised, slug-style key suitable for fuzzy matching.
  */
 export function parseMarkdownSections(markdown: string): ParsedSection[] {
-  const lines = markdown.split('\n');
+  const lines = markdown.split("\n");
   const sections: ParsedSection[] = [];
   let currentSection: ParsedSection | null = null;
   const currentLines: string[] = [];
@@ -22,14 +22,14 @@ export function parseMarkdownSections(markdown: string): ParsedSection[] {
 
     if (headingMatch) {
       if (currentSection) {
-        currentSection.content = currentLines.join('\n').trim();
+        currentSection.content = currentLines.join("\n").trim();
         sections.push(currentSection);
         currentLines.length = 0;
       }
       currentSection = {
-        name: headingMatch[1]!.toLowerCase().replace(/[^a-z0-9\u3040-\u9fff]+/g, '_'),
+        name: headingMatch[1]!.toLowerCase().replace(/[^a-z0-9\u3040-\u9fff]+/g, "_"),
         heading: headingMatch[1]!,
-        content: '',
+        content: "",
         lineStart: i,
       };
     } else if (currentSection) {
@@ -38,7 +38,7 @@ export function parseMarkdownSections(markdown: string): ParsedSection[] {
   }
 
   if (currentSection) {
-    currentSection.content = currentLines.join('\n').trim();
+    currentSection.content = currentLines.join("\n").trim();
     sections.push(currentSection);
   }
 
@@ -55,18 +55,18 @@ export function checkRequiredSections(
   required: string[],
 ): { present: string[]; missing: string[]; sections: ParsedSection[] } {
   const sections = parseMarkdownSections(markdown);
-  const sectionNames = sections.map(s => s.name);
+  const sectionNames = sections.map((s) => s.name);
 
   const present: string[] = [];
   const missing: string[] = [];
 
   for (const req of required) {
-    const normalized = req.toLowerCase().replace(/[^a-z0-9\u3040-\u9fff]+/g, '_');
+    const normalized = req.toLowerCase().replace(/[^a-z0-9\u3040-\u9fff]+/g, "_");
     // Strip underscores for looser comparison (e.g. 'followup' matches 'follow_up')
-    const normalizedStripped = normalized.replace(/_/g, '');
+    const normalizedStripped = normalized.replace(/_/g, "");
     // Fuzzy: either the section name contains the keyword or the keyword contains the section name
-    const found = sectionNames.some(n => {
-      const nStripped = n.replace(/_/g, '');
+    const found = sectionNames.some((n) => {
+      const nStripped = n.replace(/_/g, "");
       return (
         n.includes(normalized) ||
         normalized.includes(n) ||

@@ -429,9 +429,8 @@ export function registerTaskCrudRoutes(deps: TaskCrudRouteDeps): void {
     if ("workflow_pack_key" in body) {
       const workflowPackKey = normalizeTextField(body.workflow_pack_key);
       // Unknown pack keys fall back to "development" instead of rejecting
-      body.workflow_pack_key = workflowPackKey && isKnownPackKey(workflowPackKey)
-        ? workflowPackKey
-        : DEFAULT_WORKFLOW_PACK_KEY;
+      body.workflow_pack_key =
+        workflowPackKey && isKnownPackKey(workflowPackKey) ? workflowPackKey : DEFAULT_WORKFLOW_PACK_KEY;
     }
     if ("workflow_meta_json" in body) {
       const rawWorkflowMeta = body.workflow_meta_json;
@@ -601,9 +600,9 @@ export function registerTaskCrudRoutes(deps: TaskCrudRouteDeps): void {
   // Output file viewer endpoints
   app.get("/api/tasks/:id/output", (req, res) => {
     const taskId = String(req.params.id);
-    const task = db
-      .prepare("SELECT project_path, workflow_meta_json FROM tasks WHERE id = ?")
-      .get(taskId) as { project_path: string | null; workflow_meta_json: string | null } | undefined;
+    const task = db.prepare("SELECT project_path, workflow_meta_json FROM tasks WHERE id = ?").get(taskId) as
+      | { project_path: string | null; workflow_meta_json: string | null }
+      | undefined;
 
     if (!task?.project_path) return res.json({ files: [] });
 
@@ -635,7 +634,7 @@ export function registerTaskCrudRoutes(deps: TaskCrudRouteDeps): void {
         };
       })
       .filter(Boolean)
-      .sort((a, b) => (b!.modified - a!.modified));
+      .sort((a, b) => b!.modified - a!.modified);
 
     res.json({ files, output_dir: outputDir });
   });
@@ -644,9 +643,9 @@ export function registerTaskCrudRoutes(deps: TaskCrudRouteDeps): void {
     const taskId = String(req.params.id);
     const filename = String(req.params.filename);
 
-    const task = db
-      .prepare("SELECT project_path FROM tasks WHERE id = ?")
-      .get(taskId) as { project_path: string | null } | undefined;
+    const task = db.prepare("SELECT project_path FROM tasks WHERE id = ?").get(taskId) as
+      | { project_path: string | null }
+      | undefined;
 
     if (!task?.project_path) return res.status(404).json({ error: "not_found" });
 

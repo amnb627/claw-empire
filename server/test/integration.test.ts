@@ -15,30 +15,27 @@ import { randomUUID } from "node:crypto";
 // ---------------------------------------------------------------------------
 
 function seedProject(db: DatabaseSync, id: string, name = "Test Project"): void {
-  db.prepare(
-    "INSERT INTO projects (id, name, project_path, core_goal) VALUES (?, ?, ?, ?)",
-  ).run(id, name, `/workspace/${id}`, "Test goal");
+  db.prepare("INSERT INTO projects (id, name, project_path, core_goal) VALUES (?, ?, ?, ?)").run(
+    id,
+    name,
+    `/workspace/${id}`,
+    "Test goal",
+  );
 }
 
-function seedAgent(
-  db: DatabaseSync,
-  id: string,
-  deptId: string | null = null,
-  role = "junior",
-): void {
-  db.prepare(
-    "INSERT INTO agents (id, name, role, workflow_pack_key) VALUES (?, ?, ?, ?)",
-  ).run(id, `Agent-${id}`, role, "development");
+function seedAgent(db: DatabaseSync, id: string, deptId: string | null = null, role = "junior"): void {
+  db.prepare("INSERT INTO agents (id, name, role, workflow_pack_key) VALUES (?, ?, ?, ?)").run(
+    id,
+    `Agent-${id}`,
+    role,
+    "development",
+  );
   if (deptId) {
     db.prepare("UPDATE agents SET department_id = ? WHERE id = ?").run(deptId, id);
   }
 }
 
-function seedTask(
-  db: DatabaseSync,
-  id: string,
-  overrides: Record<string, unknown> = {},
-): void {
+function seedTask(db: DatabaseSync, id: string, overrides: Record<string, unknown> = {}): void {
   const title = (overrides.title as string) ?? "Test Task";
   const status = (overrides.status as string) ?? "inbox";
   const packKey = (overrides.workflow_pack_key as string) ?? "development";
@@ -61,9 +58,13 @@ describe("Full Task Lifecycle Integration", () => {
     applyBaseSchema(db);
 
     // Seed minimum required data
-    db.prepare(
-      "INSERT INTO departments (id, name, name_ko, icon, color) VALUES (?, ?, ?, ?, ?)",
-    ).run("dept-dev", "Development", "개발", "💻", "#3b82f6");
+    db.prepare("INSERT INTO departments (id, name, name_ko, icon, color) VALUES (?, ?, ?, ?, ?)").run(
+      "dept-dev",
+      "Development",
+      "개발",
+      "💻",
+      "#3b82f6",
+    );
 
     db.prepare(
       "INSERT INTO workflow_packs (key, name, enabled, input_schema_json, prompt_preset_json, qa_rules_json, output_template_json, routing_keywords_json, cost_profile_json) VALUES (?, ?, 1, '{}', '{}', '{}', '{}', '[]', '{}')",
@@ -99,9 +100,9 @@ describe("Full Task Lifecycle Integration", () => {
   // ── Schema bootstrapping ─────────────────────────────────────────────────
 
   it("applies base schema with all expected tables", () => {
-    const tables = db
-      .prepare(`SELECT name FROM sqlite_master WHERE type='table' ORDER BY name`)
-      .all() as Array<{ name: string }>;
+    const tables = db.prepare(`SELECT name FROM sqlite_master WHERE type='table' ORDER BY name`).all() as Array<{
+      name: string;
+    }>;
     const tableNames = new Set(tables.map((t) => t.name));
 
     const required = [
@@ -133,17 +134,13 @@ describe("Full Task Lifecycle Integration", () => {
     const taskId = "test-task-new-fields";
     seedTask(db, taskId, { status: "inbox", workflow_pack_key: "development" });
 
-    db.prepare(
-      "UPDATE tasks SET workflow_meta_json = ?, project_id = ? WHERE id = ?",
-    ).run(
+    db.prepare("UPDATE tasks SET workflow_meta_json = ?, project_id = ? WHERE id = ?").run(
       JSON.stringify({ context_files: ["README.md"], output_format: "markdown" }),
       "proj-1",
       taskId,
     );
 
-    const task = db.prepare("SELECT * FROM tasks WHERE id = ?").get(taskId) as
-      | Record<string, unknown>
-      | undefined;
+    const task = db.prepare("SELECT * FROM tasks WHERE id = ?").get(taskId) as Record<string, unknown> | undefined;
 
     expect(task).toBeDefined();
     expect(task!.id).toBe(taskId);
@@ -165,9 +162,9 @@ describe("Full Task Lifecycle Integration", () => {
     seedTask(db, sourceId, { status: "in_progress" });
     seedTask(db, chainedId, { status: "planned", chain_to_task_id: sourceId });
 
-    const chained = db.prepare("SELECT chain_to_task_id FROM tasks WHERE id = ?").get(
-      chainedId,
-    ) as { chain_to_task_id: string | null } | undefined;
+    const chained = db.prepare("SELECT chain_to_task_id FROM tasks WHERE id = ?").get(chainedId) as
+      | { chain_to_task_id: string | null }
+      | undefined;
 
     expect(chained?.chain_to_task_id).toBe(sourceId);
   });
@@ -181,18 +178,21 @@ describe("Full Task Lifecycle Integration", () => {
 
     db.prepare("DELETE FROM tasks WHERE id = ?").run(srcId);
 
-    const tgt = db.prepare("SELECT chain_to_task_id FROM tasks WHERE id = ?").get(
-      tgtId,
-    ) as { chain_to_task_id: string | null } | undefined;
+    const tgt = db.prepare("SELECT chain_to_task_id FROM tasks WHERE id = ?").get(tgtId) as
+      | { chain_to_task_id: string | null }
+      | undefined;
 
     expect(tgt?.chain_to_task_id).toBeNull();
   });
 
   it("rejects tasks with invalid status values", () => {
     expect(() => {
-      db.prepare(
-        "INSERT INTO tasks (id, title, status, workflow_pack_key) VALUES (?, ?, ?, ?)",
-      ).run("bad-status-task", "Bad Task", "invalid_status", "development");
+      db.prepare("INSERT INTO tasks (id, title, status, workflow_pack_key) VALUES (?, ?, ?, ?)").run(
+        "bad-status-task",
+        "Bad Task",
+        "invalid_status",
+        "development",
+      );
     }).toThrow();
   });
 
@@ -211,9 +211,12 @@ describe("Full Task Lifecycle Integration", () => {
     for (const [i, status] of validStatuses.entries()) {
       const id = `valid-status-${i}`;
       expect(() => {
-        db.prepare(
-          "INSERT INTO tasks (id, title, status, workflow_pack_key) VALUES (?, ?, ?, ?)",
-        ).run(id, `Status Test ${status}`, status, "development");
+        db.prepare("INSERT INTO tasks (id, title, status, workflow_pack_key) VALUES (?, ?, ?, ?)").run(
+          id,
+          `Status Test ${status}`,
+          status,
+          "development",
+        );
       }).not.toThrow();
     }
   });
@@ -224,22 +227,22 @@ describe("Full Task Lifecycle Integration", () => {
     const taskId = "task-pid-test";
     seedTask(db, taskId);
 
-    db.prepare(
-      "INSERT INTO active_cli_processes (task_id, pid, provider) VALUES (?, ?, ?)",
-    ).run(taskId, 9999, "claude");
-
-    const row = db.prepare("SELECT pid, provider FROM active_cli_processes WHERE task_id = ?").get(
+    db.prepare("INSERT INTO active_cli_processes (task_id, pid, provider) VALUES (?, ?, ?)").run(
       taskId,
-    ) as { pid: number; provider: string } | undefined;
+      9999,
+      "claude",
+    );
+
+    const row = db.prepare("SELECT pid, provider FROM active_cli_processes WHERE task_id = ?").get(taskId) as
+      | { pid: number; provider: string }
+      | undefined;
 
     expect(row?.pid).toBe(9999);
     expect(row?.provider).toBe("claude");
 
     db.prepare("DELETE FROM active_cli_processes WHERE task_id = ?").run(taskId);
 
-    const after = db
-      .prepare("SELECT * FROM active_cli_processes WHERE task_id = ?")
-      .get(taskId);
+    const after = db.prepare("SELECT * FROM active_cli_processes WHERE task_id = ?").get(taskId);
     expect(after).toBeUndefined();
   });
 
@@ -247,15 +250,11 @@ describe("Full Task Lifecycle Integration", () => {
     const taskId = "task-cascade-pid";
     seedTask(db, taskId);
 
-    db.prepare(
-      "INSERT INTO active_cli_processes (task_id, pid, provider) VALUES (?, ?, ?)",
-    ).run(taskId, 1234, "codex");
+    db.prepare("INSERT INTO active_cli_processes (task_id, pid, provider) VALUES (?, ?, ?)").run(taskId, 1234, "codex");
 
     db.prepare("DELETE FROM tasks WHERE id = ?").run(taskId);
 
-    const row = db
-      .prepare("SELECT * FROM active_cli_processes WHERE task_id = ?")
-      .get(taskId);
+    const row = db.prepare("SELECT * FROM active_cli_processes WHERE task_id = ?").get(taskId);
     expect(row).toBeUndefined();
   });
 
@@ -263,9 +262,7 @@ describe("Full Task Lifecycle Integration", () => {
 
   it("agent_project_memory: store and retrieve insights", () => {
     const tableExists = db
-      .prepare(
-        `SELECT name FROM sqlite_master WHERE type='table' AND name='agent_project_memory'`,
-      )
+      .prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name='agent_project_memory'`)
       .get();
     if (!tableExists) return;
 
@@ -275,9 +272,9 @@ describe("Full Task Lifecycle Integration", () => {
        VALUES (?, ?, ?, ?, ?, ?)`,
     ).run(memId, "proj-1", "claude", "Always use TypeScript strict mode", "convention", 8);
 
-    const row = db
-      .prepare("SELECT * FROM agent_project_memory WHERE id = ?")
-      .get(memId) as Record<string, unknown> | undefined;
+    const row = db.prepare("SELECT * FROM agent_project_memory WHERE id = ?").get(memId) as
+      | Record<string, unknown>
+      | undefined;
 
     expect(row).toBeDefined();
     expect(row!.insight).toBe("Always use TypeScript strict mode");
@@ -287,9 +284,7 @@ describe("Full Task Lifecycle Integration", () => {
 
   it("agent_project_memory: rejects invalid category values", () => {
     const tableExists = db
-      .prepare(
-        `SELECT name FROM sqlite_master WHERE type='table' AND name='agent_project_memory'`,
-      )
+      .prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name='agent_project_memory'`)
       .get();
     if (!tableExists) return;
 
@@ -303,9 +298,7 @@ describe("Full Task Lifecycle Integration", () => {
 
   it("agent_project_memory: confidence must be between 1 and 10", () => {
     const tableExists = db
-      .prepare(
-        `SELECT name FROM sqlite_master WHERE type='table' AND name='agent_project_memory'`,
-      )
+      .prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name='agent_project_memory'`)
       .get();
     if (!tableExists) return;
 
@@ -320,9 +313,7 @@ describe("Full Task Lifecycle Integration", () => {
   // ── task_schedules ────────────────────────────────────────────────────────
 
   it("task_schedules: create and read a schedule", () => {
-    const tableExists = db
-      .prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name='task_schedules'`)
-      .get();
+    const tableExists = db.prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name='task_schedules'`).get();
     if (!tableExists) return;
 
     const schedId = randomUUID();
@@ -333,9 +324,9 @@ describe("Full Task Lifecycle Integration", () => {
        VALUES (?, ?, ?, ?, ?)`,
     ).run(schedId, "Weekly Report {{date}}", 7, now + 7 * 86400000, 1);
 
-    const row = db
-      .prepare("SELECT * FROM task_schedules WHERE id = ?")
-      .get(schedId) as Record<string, unknown> | undefined;
+    const row = db.prepare("SELECT * FROM task_schedules WHERE id = ?").get(schedId) as
+      | Record<string, unknown>
+      | undefined;
 
     expect(row).toBeDefined();
     expect(row!.title_template).toBe("Weekly Report {{date}}");
@@ -344,9 +335,7 @@ describe("Full Task Lifecycle Integration", () => {
   });
 
   it("task_schedules: enabled flag controls whether due schedules are eligible", () => {
-    const tableExists = db
-      .prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name='task_schedules'`)
-      .get();
+    const tableExists = db.prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name='task_schedules'`).get();
     if (!tableExists) return;
 
     const now = Date.now();
@@ -366,9 +355,7 @@ describe("Full Task Lifecycle Integration", () => {
     ).run(disabledId, "Disabled Sched", 1, pastTrigger, 0);
 
     const due = db
-      .prepare(
-        `SELECT id FROM task_schedules WHERE enabled = 1 AND next_trigger_at <= ?`,
-      )
+      .prepare(`SELECT id FROM task_schedules WHERE enabled = 1 AND next_trigger_at <= ?`)
       .all(now) as Array<{ id: string }>;
 
     const ids = due.map((r) => r.id);
@@ -379,9 +366,10 @@ describe("Full Task Lifecycle Integration", () => {
   // ── workflow_packs ────────────────────────────────────────────────────────
 
   it("workflow_packs: all builtin packs are seeded", () => {
-    const rows = db
-      .prepare("SELECT key, enabled FROM workflow_packs ORDER BY key")
-      .all() as Array<{ key: string; enabled: number }>;
+    const rows = db.prepare("SELECT key, enabled FROM workflow_packs ORDER BY key").all() as Array<{
+      key: string;
+      enabled: number;
+    }>;
     const packMap = new Map(rows.map((r) => [r.key, r.enabled]));
 
     expect(packMap.has("development")).toBe(true);
@@ -406,9 +394,7 @@ describe("Full Task Lifecycle Integration", () => {
        VALUES (?, ?, 1, '{}', '{}', '{}', '{}', '[]', '{}')`,
     ).run(key, "Test Custom Pack");
 
-    const row = db
-      .prepare("SELECT key FROM workflow_packs WHERE key = ?")
-      .get(key) as { key: string } | undefined;
+    const row = db.prepare("SELECT key FROM workflow_packs WHERE key = ?").get(key) as { key: string } | undefined;
     expect(row?.key).toBe(key);
 
     db.prepare("DELETE FROM workflow_packs WHERE key = ?").run(key);
@@ -453,9 +439,9 @@ describe("Full Task Lifecycle Integration", () => {
     }).not.toThrow();
 
     const count = (
-      db.prepare(
-        `SELECT COUNT(*) as c FROM review_revision_history WHERE task_id = ? AND normalized_note = ?`,
-      ).get(taskId, "dup note") as { c: number }
+      db
+        .prepare(`SELECT COUNT(*) as c FROM review_revision_history WHERE task_id = ? AND normalized_note = ?`)
+        .get(taskId, "dup note") as { c: number }
     ).c;
     expect(count).toBe(1);
   });
@@ -477,9 +463,9 @@ describe("Full Task Lifecycle Integration", () => {
       ).run(meetingId, taskId, "peer_review", 1, "Peer Review", "in_progress", now);
     }).not.toThrow();
 
-    const row = db
-      .prepare("SELECT meeting_type FROM meeting_minutes WHERE id = ?")
-      .get(meetingId) as { meeting_type: string } | undefined;
+    const row = db.prepare("SELECT meeting_type FROM meeting_minutes WHERE id = ?").get(meetingId) as
+      | { meeting_type: string }
+      | undefined;
 
     expect(row?.meeting_type).toBe("peer_review");
   });
@@ -504,9 +490,12 @@ describe("Full Task Lifecycle Integration", () => {
 
     seedTask(db, taskId);
 
-    db.prepare(
-      `INSERT INTO subtasks (id, task_id, title, status) VALUES (?, ?, ?, ?)`,
-    ).run(subId, taskId, "Do something", "pending");
+    db.prepare(`INSERT INTO subtasks (id, task_id, title, status) VALUES (?, ?, ?, ?)`).run(
+      subId,
+      taskId,
+      "Do something",
+      "pending",
+    );
 
     db.prepare("DELETE FROM tasks WHERE id = ?").run(taskId);
 
@@ -524,9 +513,7 @@ describe("Full Task Lifecycle Integration", () => {
        VALUES (?, ?, ?, ?, ?, ?)`,
     ).run(msgId, "ceo", "agent", "agent-1", "Please begin the task.", "chat");
 
-    const row = db.prepare("SELECT * FROM messages WHERE id = ?").get(msgId) as
-      | Record<string, unknown>
-      | undefined;
+    const row = db.prepare("SELECT * FROM messages WHERE id = ?").get(msgId) as Record<string, unknown> | undefined;
 
     expect(row?.content).toBe("Please begin the task.");
     expect(row?.sender_type).toBe("ceo");
@@ -539,14 +526,16 @@ describe("Full Task Lifecycle Integration", () => {
     seedTask(db, taskId);
 
     for (let i = 0; i < 3; i++) {
-      db.prepare(
-        "INSERT INTO task_logs (task_id, kind, message) VALUES (?, ?, ?)",
-      ).run(taskId, "info", `Log entry ${i}`);
+      db.prepare("INSERT INTO task_logs (task_id, kind, message) VALUES (?, ?, ?)").run(
+        taskId,
+        "info",
+        `Log entry ${i}`,
+      );
     }
 
-    const logs = db
-      .prepare("SELECT message FROM task_logs WHERE task_id = ? ORDER BY id")
-      .all(taskId) as Array<{ message: string }>;
+    const logs = db.prepare("SELECT message FROM task_logs WHERE task_id = ? ORDER BY id").all(taskId) as Array<{
+      message: string;
+    }>;
 
     expect(logs).toHaveLength(3);
     expect(logs[0]!.message).toBe("Log entry 0");
@@ -560,27 +549,23 @@ describe("Full Task Lifecycle Integration", () => {
       "INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
     ).run("testKey", "initial");
 
-    const row1 = db.prepare("SELECT value FROM settings WHERE key = ?").get("testKey") as
-      | { value: string }
-      | undefined;
+    const row1 = db.prepare("SELECT value FROM settings WHERE key = ?").get("testKey") as { value: string } | undefined;
     expect(row1?.value).toBe("initial");
 
     db.prepare(
       "INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
     ).run("testKey", "updated");
 
-    const row2 = db.prepare("SELECT value FROM settings WHERE key = ?").get("testKey") as
-      | { value: string }
-      | undefined;
+    const row2 = db.prepare("SELECT value FROM settings WHERE key = ?").get("testKey") as { value: string } | undefined;
     expect(row2?.value).toBe("updated");
   });
 
   // ── indexes ───────────────────────────────────────────────────────────────
 
   it("all critical indexes are created", () => {
-    const indexes = db
-      .prepare(`SELECT name FROM sqlite_master WHERE type='index' ORDER BY name`)
-      .all() as Array<{ name: string }>;
+    const indexes = db.prepare(`SELECT name FROM sqlite_master WHERE type='index' ORDER BY name`).all() as Array<{
+      name: string;
+    }>;
     const indexNames = new Set(indexes.map((r) => r.name));
 
     const required = [

@@ -25,6 +25,7 @@ interface CreateModalProps {
     project_path?: string;
     assigned_agent_id?: string;
     workflow_pack_key?: WorkflowPackKey;
+    workflow_meta_json?: Record<string, unknown>;
   }) => void;
   onAssign: (taskId: string, agentId: string) => void;
 }
@@ -43,6 +44,7 @@ function CreateModal({ agents, departments, onClose, onCreate, onAssign }: Creat
   const [packNotes, setPackNotes] = useState("");
   const [packPreviewExpanded, setPackPreviewExpanded] = useState(false);
   const [outputPath, setOutputPath] = useState("");
+  const [contextFiles, setContextFiles] = useState<string[]>([]);
   const [submitBusy, setSubmitBusy] = useState(false);
   const [submitWithoutProjectPromptOpen, setSubmitWithoutProjectPromptOpen] = useState(false);
   const [formFeedback, setFormFeedback] = useState<FormFeedback | null>(null);
@@ -53,6 +55,18 @@ function CreateModal({ agents, departments, onClose, onCreate, onAssign }: Creat
   const assembledDescription = isPackMode
     ? assemblePackPrompt(packName, packSchema!, packFieldValues, packNotes)
     : description;
+
+  // Build workflow_meta_json merging context_files and facility (for ZK auto-inject)
+  const workflowMetaJson = useMemo(() => {
+    const meta: Record<string, unknown> = {};
+    const validFiles = contextFiles.filter((f) => f.trim().length > 0);
+    if (validFiles.length > 0) meta.context_files = validFiles;
+    // Auto-populate facility from facility_visit pack field for ZK injection
+    if (workflowPackKey === "facility_visit" && packFieldValues.facility?.trim()) {
+      meta.facility = packFieldValues.facility.trim();
+    }
+    return Object.keys(meta).length > 0 ? meta : null;
+  }, [contextFiles, workflowPackKey, packFieldValues.facility]);
 
   const filteredAgents = useMemo(
     () => (departmentId ? agents.filter((agent) => agent.department_id === departmentId) : agents),
@@ -133,6 +147,7 @@ function CreateModal({ agents, departments, onClose, onCreate, onAssign }: Creat
         projectQuery: projectPicker.projectQuery,
         createNewProjectMode: projectPicker.createNewProjectMode,
         newProjectPath: projectPicker.newProjectPath,
+        workflowMetaJson,
         selectedProject: projectPicker.selectedProject,
         projects: projectPicker.projects,
         submitBusy,
@@ -171,6 +186,18 @@ function CreateModal({ agents, departments, onClose, onCreate, onAssign }: Creat
   const handleAssignAgentChange = useCallback((agentIdValue: string) => {
     setAssignAgentId(agentIdValue);
     setFormFeedback(null);
+  }, []);
+
+  const handleAddContextFile = useCallback(() => {
+    setContextFiles((prev) => [...prev, ""]);
+  }, []);
+
+  const handleUpdateContextFile = useCallback((index: number, value: string) => {
+    setContextFiles((prev) => prev.map((f, i) => (i === index ? value : f)));
+  }, []);
+
+  const handleRemoveContextFile = useCallback((index: number) => {
+    setContextFiles((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
   const projectSectionProps = {
@@ -341,6 +368,10 @@ function CreateModal({ agents, departments, onClose, onCreate, onAssign }: Creat
       onTogglePackPreview={() => setPackPreviewExpanded((prev) => !prev)}
       onOutputPathChange={setOutputPath}
       onAutoFillOutputPath={() => setOutputPath(defaultOutputPath)}
+      contextFiles={contextFiles}
+      onAddContextFile={handleAddContextFile}
+      onUpdateContextFile={handleUpdateContextFile}
+      onRemoveContextFile={handleRemoveContextFile}
     />
   );
 }

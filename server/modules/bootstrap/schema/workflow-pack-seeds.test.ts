@@ -46,9 +46,9 @@ describe("workflow-pack-seeds: facility_visit", () => {
   });
 
   it("facility_visit routing keywords에 '訪問準備'가 포함되어 있다", () => {
-    const row = db.prepare("SELECT routing_keywords_json FROM workflow_packs WHERE key = ?").get(
-      "facility_visit",
-    ) as { routing_keywords_json: string } | undefined;
+    const row = db.prepare("SELECT routing_keywords_json FROM workflow_packs WHERE key = ?").get("facility_visit") as
+      | { routing_keywords_json: string }
+      | undefined;
     expect(row).toBeDefined();
     const keywords = JSON.parse(row!.routing_keywords_json) as string[];
     expect(keywords).toContain("訪問準備");

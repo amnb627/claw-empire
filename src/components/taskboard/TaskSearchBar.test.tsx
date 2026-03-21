@@ -18,12 +18,7 @@ function renderBar(props?: {
   filteredCount?: number;
   onFilterChange?: (f: TaskFilter) => void;
 }) {
-  const {
-    filter = EMPTY_FILTER,
-    totalCount = 47,
-    filteredCount = 47,
-    onFilterChange = vi.fn(),
-  } = props ?? {};
+  const { filter = EMPTY_FILTER, totalCount = 47, filteredCount = 47, onFilterChange = vi.fn() } = props ?? {};
   return render(
     <I18nProvider language="en">
       <TaskSearchBar
@@ -39,9 +34,7 @@ function renderBar(props?: {
 describe("TaskSearchBar", () => {
   it("renders with the correct placeholder text", () => {
     renderBar();
-    expect(
-      screen.getByPlaceholderText(/search tasks.*/i),
-    ).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/search tasks.*/i)).toBeInTheDocument();
   });
 
   it("shows the search input with current query value", () => {
@@ -55,9 +48,7 @@ describe("TaskSearchBar", () => {
     renderBar({ onFilterChange });
     const input = screen.getByRole("textbox");
     fireEvent.change(input, { target: { value: "hello" } });
-    expect(onFilterChange).toHaveBeenCalledWith(
-      expect.objectContaining({ query: "hello" }),
-    );
+    expect(onFilterChange).toHaveBeenCalledWith(expect.objectContaining({ query: "hello" }));
   });
 
   it("shows clear button when query is non-empty", () => {
@@ -74,9 +65,7 @@ describe("TaskSearchBar", () => {
     const onFilterChange = vi.fn();
     renderBar({ filter: { ...EMPTY_FILTER, query: "test" }, onFilterChange });
     fireEvent.click(screen.getByRole("button", { name: /clear search/i }));
-    expect(onFilterChange).toHaveBeenCalledWith(
-      expect.objectContaining({ query: "" }),
-    );
+    expect(onFilterChange).toHaveBeenCalledWith(expect.objectContaining({ query: "" }));
   });
 
   it("renders all status filter pills", () => {
@@ -94,9 +83,7 @@ describe("TaskSearchBar", () => {
     const onFilterChange = vi.fn();
     renderBar({ onFilterChange });
     fireEvent.click(screen.getByRole("button", { name: "inbox" }));
-    expect(onFilterChange).toHaveBeenCalledWith(
-      expect.objectContaining({ status: expect.arrayContaining(["inbox"]) }),
-    );
+    expect(onFilterChange).toHaveBeenCalledWith(expect.objectContaining({ status: expect.arrayContaining(["inbox"]) }));
   });
 
   it("clicking an active status pill removes it from filter.status", () => {
@@ -106,9 +93,7 @@ describe("TaskSearchBar", () => {
       onFilterChange,
     });
     fireEvent.click(screen.getByRole("button", { name: "inbox" }));
-    expect(onFilterChange).toHaveBeenCalledWith(
-      expect.objectContaining({ status: [] }),
-    );
+    expect(onFilterChange).toHaveBeenCalledWith(expect.objectContaining({ status: [] }));
   });
 
   it("shows result count when filtered < total", () => {

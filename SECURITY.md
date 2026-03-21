@@ -5,9 +5,9 @@
 Security fixes are primarily applied to the latest stable line.
 
 | Version | Supported |
-| --- | --- |
-| 1.2.x | Yes |
-| < 1.2.0 | No |
+| ------- | --------- |
+| 1.2.x   | Yes       |
+| < 1.2.0 | No        |
 
 ## Reporting a Vulnerability
 

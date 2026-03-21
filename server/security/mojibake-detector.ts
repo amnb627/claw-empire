@@ -325,8 +325,7 @@ export class MojibakeDetector {
         for (const pattern of entry.result.patterns) {
           detectionsByPattern[pattern] = (detectionsByPattern[pattern] || 0) + 1;
         }
-        detectionsBySeverity[entry.result.severity] =
-          (detectionsBySeverity[entry.result.severity] || 0) + 1;
+        detectionsBySeverity[entry.result.severity] = (detectionsBySeverity[entry.result.severity] || 0) + 1;
         detectionsBySource[entry.source] = (detectionsBySource[entry.source] || 0) + 1;
       }
     }
@@ -358,10 +357,7 @@ export function getMojibakeDetector(options?: MojibakeDetectorOptions): Mojibake
 /**
  * 文字列の文字化けを検出（ユーティリティ関数）
  */
-export function detectMojibake(
-  text: string,
-  options?: MojibakeDetectorOptions
-): MojibakeDetectionResult {
+export function detectMojibake(text: string, options?: MojibakeDetectorOptions): MojibakeDetectionResult {
   const detector = new MojibakeDetector(options);
   return detector.detect(text);
 }
@@ -371,7 +367,7 @@ export function detectMojibake(
  */
 export function detectMojibakeInObject(
   obj: unknown,
-  options?: MojibakeDetectorOptions
+  options?: MojibakeDetectorOptions,
 ): Array<{ path: string; result: MojibakeDetectionResult }> {
   const results: Array<{ path: string; result: MojibakeDetectionResult }> = [];
   const detector = new MojibakeDetector(options);
@@ -410,16 +406,13 @@ export interface MojibakeSafeResponse<T> {
 /**
  * データが文字化けしていないか検証した上で返す
  */
-export function validateDataMojibake<T>(
-  data: T,
-  options?: MojibakeDetectorOptions
-): MojibakeSafeResponse<T> {
+export function validateDataMojibake<T>(data: T, options?: MojibakeDetectorOptions): MojibakeSafeResponse<T> {
   const detections = detectMojibakeInObject(data, options);
 
   if (detections.length > 0) {
     // 最も深刻な検出結果を取得
     const mostSevere = detections.reduce((prev, curr) =>
-      compareSeverity(curr.result.severity, prev.result.severity) > 0 ? curr : prev
+      compareSeverity(curr.result.severity, prev.result.severity) > 0 ? curr : prev,
     );
 
     return {
@@ -442,7 +435,7 @@ export function validateDataMojibake<T>(
  */
 export function validateWebSocketMessage(
   message: string | unknown,
-  options?: MojibakeDetectorOptions
+  options?: MojibakeDetectorOptions,
 ): MojibakeSafeResponse<unknown> {
   const messageStr = typeof message === "string" ? message : JSON.stringify(message);
   const result = detectMojibake(messageStr, options);
@@ -460,7 +453,7 @@ export function validateWebSocketMessage(
  */
 export function createMojibakeAwareLogger(
   baseLogger: Pick<typeof console, "log" | "warn" | "error">,
-  options?: MojibakeDetectorOptions
+  options?: MojibakeDetectorOptions,
 ) {
   const detector = new MojibakeDetector(options);
 

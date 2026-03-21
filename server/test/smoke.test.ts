@@ -11,10 +11,7 @@ import {
   collectUnresolvedDeferredRuntimeFunctions,
   assertNoUnresolvedDeferredRuntimeFunctions,
 } from "../modules/deferred-runtime.ts";
-import {
-  authorizeWatcherSubscription,
-  detectPrivilegeEscalation,
-} from "../security/watcher/authorization.ts";
+import { authorizeWatcherSubscription, detectPrivilegeEscalation } from "../security/watcher/authorization.ts";
 import { MESSENGER_CHANNELS, isMessengerChannel, isNativeMessengerChannel } from "../messenger/channels.ts";
 
 describe("backend test baseline", () => {

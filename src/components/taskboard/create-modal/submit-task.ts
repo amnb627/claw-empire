@@ -13,6 +13,7 @@ type CreateTaskHandler = (input: {
   project_path?: string;
   assigned_agent_id?: string;
   workflow_pack_key?: WorkflowPackKey;
+  workflow_meta_json?: Record<string, unknown>;
 }) => void | Promise<void>;
 
 type ResolvePathHelperErrorMessage = (error: unknown, fallback: Record<Locale, string>) => string;
@@ -33,6 +34,7 @@ interface SubmitTaskContext {
   projectQuery: string;
   createNewProjectMode: boolean;
   newProjectPath: string;
+  workflowMetaJson: Record<string, unknown> | null;
   selectedProject: Project | null;
   projects: Project[];
   submitBusy: boolean;
@@ -72,6 +74,7 @@ export async function submitTaskWithProjectHandling(
     projectQuery,
     createNewProjectMode,
     newProjectPath,
+    workflowMetaJson,
     selectedProject,
     projects,
     submitBusy,
@@ -352,6 +355,7 @@ export async function submitTaskWithProjectHandling(
         project_id: resolvedProject?.id,
         project_path: resolvedProject?.project_path,
         assigned_agent_id: assignAgentId || undefined,
+        workflow_meta_json: workflowMetaJson && Object.keys(workflowMetaJson).length > 0 ? workflowMetaJson : undefined,
       }),
     );
     onClose();

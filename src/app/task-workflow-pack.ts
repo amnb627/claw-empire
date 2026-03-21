@@ -11,6 +11,7 @@ export type TaskCreateInput = {
   project_path?: string;
   assigned_agent_id?: string;
   workflow_pack_key?: WorkflowPackKey;
+  workflow_meta_json?: Record<string, unknown>;
 };
 
 export function filterTasksByOfficePack(tasks: Task[], packKey: WorkflowPackKey): Task[] {

@@ -316,7 +316,7 @@ describe("Mobile Inbox Mojibake Detection Utilities", () => {
 
     // 真の文字化けパターンのみ検出（Replacement Characterなど）
     // 全角スペースやユーロ記号は正当なUnicode文字として扱う
-    const mojibakePatterns = [
+    const mojibakePatterns: RegExp[] = [
       // Replacement Character - デコード失敗の明確な証拠
       // encoding-mismatch - エンコード/デコードの不整合
     ];
@@ -366,7 +366,7 @@ describe("Mobile Inbox Mojibake Detection Utilities", () => {
 
     for (const result of results) {
       // 全角スペースは日本語の正当な文字なので、文字化けパターンから除外
-      const textWithoutFullwidthSpace = result.input.replace(/[　]/g, "");
+      const textWithoutFullwidthSpace = result.input.replace(/[\u3000]/g, "");
       const mojibakeCheck = detectMojibake(textWithoutFullwidthSpace);
       expect(mojibakeCheck.hasMojibake).toBe(false);
     }

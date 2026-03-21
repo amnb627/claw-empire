@@ -104,6 +104,7 @@ export const WORKFLOW_PACK_KEYS = [
   "video_preprod",
   "web_research_report",
   "roleplay",
+  "facility_visit",
 ] as const;
 export type WorkflowPackKey = (typeof WORKFLOW_PACK_KEYS)[number];
 

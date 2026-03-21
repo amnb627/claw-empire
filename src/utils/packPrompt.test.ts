@@ -1,10 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  assemblePackPrompt,
-  hasSchemaFields,
-  normalizePackInputSchema,
-  type PackInputSchema,
-} from "./packPrompt";
+import { assemblePackPrompt, hasSchemaFields, normalizePackInputSchema, type PackInputSchema } from "./packPrompt";
 
 describe("assemblePackPrompt", () => {
   const schema: PackInputSchema = {

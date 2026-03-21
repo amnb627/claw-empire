@@ -367,9 +367,7 @@ export function registerUpdateAutoRoutes(ctx: RuntimeContext): void {
       /* db not reachable */
     }
     try {
-      const rows = db
-        .prepare(`SELECT count(*) AS cnt FROM active_cli_processes`)
-        .get() as { cnt: number } | undefined;
+      const rows = db.prepare(`SELECT count(*) AS cnt FROM active_cli_processes`).get() as { cnt: number } | undefined;
       activeProcessCount = rows?.cnt ?? 0;
     } catch {
       /* table may not exist yet */

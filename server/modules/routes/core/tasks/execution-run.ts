@@ -11,6 +11,7 @@ import {
   consumeInterruptPrompts,
   loadPendingInterruptPrompts,
 } from "../../../workflow/core/interrupt-injection-tools.ts";
+import { enrichPrompt } from "../../../workflow/agents/prompt-enrichment.ts";
 
 export type TaskRunRouteDeps = Pick<
   RuntimeContext,
@@ -84,7 +85,7 @@ export function registerTaskRunRoute(deps: TaskRunRouteDeps): void {
     buildAvailableSkillsPromptBlock,
   } = deps;
 
-  app.post("/api/tasks/:id/run", (req, res) => {
+  app.post("/api/tasks/:id/run", async (req, res) => {
     const id = String(req.params.id);
     const task = db.prepare("SELECT * FROM tasks WHERE id = ?").get(id) as
       | {
@@ -95,6 +96,7 @@ export function registerTaskRunRoute(deps: TaskRunRouteDeps): void {
           department_id: string | null;
           project_id: string | null;
           workflow_pack_key: string | null;
+          workflow_meta_json: string | null;
           project_path: string | null;
           status: string;
         }
@@ -455,7 +457,7 @@ Whenever you complete a subtask, report it in this format:
       videoArtifactRelativePath: videoArtifactSpec?.relativePath,
     });
 
-    const prompt = buildTaskExecutionPrompt(
+    const basePrompt = buildTaskExecutionPrompt(
       [
         (
           buildAvailableSkillsPromptBlock ||
@@ -486,6 +488,19 @@ Whenever you complete a subtask, report it in this format:
         allowWarningFix: hasExplicitWarningFixRequest(task.title, task.description),
       },
     );
+
+    // Context snapshot injection: prepend enriched context from workflow_meta_json
+    const enrichment = await enrichPrompt({
+      taskId: id,
+      projectId: task.project_id ?? null,
+      workflowMetaJson: task.workflow_meta_json ?? null,
+      projectPath: projectPath ?? null,
+      db: db as unknown as import("node:sqlite").DatabaseSync,
+    });
+    const prompt = enrichment.contextBlock + basePrompt;
+    if (enrichment.injectedFiles.length > 0) {
+      appendTaskLog(id, "system", `Context injected: ${enrichment.injectedFiles.join(", ")}`);
+    }
 
     if (pendingInterruptPrompts.length > 0) {
       consumeInterruptPrompts(

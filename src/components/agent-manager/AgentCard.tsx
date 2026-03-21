@@ -81,9 +81,7 @@ export default function AgentCard({
 
       {(agent.stats_tasks_done > 0 || agent.stats_xp > 0) && (
         <div className="mt-2.5 flex items-center gap-2">
-          <span className="text-[10px] font-bold text-yellow-400">
-            Lv.{Math.floor(agent.stats_xp / 100) + 1}
-          </span>
+          <span className="text-[10px] font-bold text-yellow-400">Lv.{Math.floor(agent.stats_xp / 100) + 1}</span>
           <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: "var(--th-bg-surface)" }}>
             <div
               className="h-full bg-gradient-to-r from-yellow-500 to-amber-400 rounded-full"

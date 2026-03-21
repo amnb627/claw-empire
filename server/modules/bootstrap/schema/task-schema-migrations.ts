@@ -154,10 +154,14 @@ export function applyTaskSchemaMigrations(db: DbLike): void {
   // Indexes on migration-added columns (safe: IF NOT EXISTS)
   try {
     db.exec("CREATE INDEX IF NOT EXISTS idx_tasks_source_task ON tasks(source_task_id)");
-  } catch { /* column may not exist in minimal test schemas */ }
+  } catch {
+    /* column may not exist in minimal test schemas */
+  }
   try {
     db.exec("CREATE INDEX IF NOT EXISTS idx_subtasks_delegated ON subtasks(task_id, delegated_task_id)");
-  } catch { /* column may not exist in minimal test schemas */ }
+  } catch {
+    /* column may not exist in minimal test schemas */
+  }
 
   // meeting_type: add 'peer_review' to the CHECK constraint
   migrateMeetingTypePeerReview(db);
@@ -750,11 +754,9 @@ function ensureMessagesIdempotencySchema(db: DbLike): void {
  * SQLite cannot ALTER CHECK constraints, so we rebuild the table.
  */
 function migrateMeetingTypePeerReview(db: DbLike): void {
-  const row = db
-    .prepare(
-      `SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'meeting_minutes'`,
-    )
-    .get() as { sql?: string } | undefined;
+  const row = db.prepare(`SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'meeting_minutes'`).get() as
+    | { sql?: string }
+    | undefined;
   const ddl = (row?.sql ?? "").toLowerCase();
   if (ddl.includes("'peer_review'")) return; // already migrated
 
@@ -814,14 +816,24 @@ function migrateMeetingTypePeerReview(db: DbLike): void {
       db.exec(`DROP TABLE ${oldTable}`);
 
       db.exec("CREATE INDEX IF NOT EXISTS idx_meeting_minutes_task ON meeting_minutes(task_id, started_at DESC)");
-      db.exec("CREATE INDEX IF NOT EXISTS idx_meeting_minute_entries_meeting ON meeting_minute_entries(meeting_id, seq ASC)");
+      db.exec(
+        "CREATE INDEX IF NOT EXISTS idx_meeting_minute_entries_meeting ON meeting_minute_entries(meeting_id, seq ASC)",
+      );
 
       db.exec("COMMIT");
     } catch (err) {
       db.exec("ROLLBACK");
       // Attempt to restore on failure
-      try { db.exec(`ALTER TABLE ${oldTable} RENAME TO meeting_minutes`); } catch { /* */ }
-      try { db.exec(`ALTER TABLE ${entriesOld} RENAME TO meeting_minute_entries`); } catch { /* */ }
+      try {
+        db.exec(`ALTER TABLE ${oldTable} RENAME TO meeting_minutes`);
+      } catch {
+        /* */
+      }
+      try {
+        db.exec(`ALTER TABLE ${entriesOld} RENAME TO meeting_minute_entries`);
+      } catch {
+        /* */
+      }
       throw err;
     }
   } finally {

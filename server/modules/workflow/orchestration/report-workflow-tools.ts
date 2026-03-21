@@ -176,6 +176,7 @@ export function createReportWorkflowTools(deps: CreateReportWorkflowToolsDeps) {
           subtaskCount: countSubtasks(db, task.id),
           agentRole: agentRow?.role ?? "junior",
           streakCount: countAgentStreak(db, task.assigned_agent_id),
+          firstPassSuccess: false,
         });
         db.prepare(
           "UPDATE agents SET stats_tasks_done = stats_tasks_done + 1, stats_xp = stats_xp + ? WHERE id = ?",

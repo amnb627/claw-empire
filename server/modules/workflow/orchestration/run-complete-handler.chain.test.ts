@@ -187,7 +187,9 @@ describe("RunCompleteHandlerDeps interface type-safety", () => {
       const deps = createDeps(db);
       expect(deps.crossDeptNextCallbacks).toBeInstanceOf(Map);
       let fired = false;
-      deps.crossDeptNextCallbacks.set("task-1", () => { fired = true; });
+      deps.crossDeptNextCallbacks.set("task-1", () => {
+        fired = true;
+      });
       deps.crossDeptNextCallbacks.get("task-1")!();
       expect(fired).toBe(true);
     } finally {
@@ -225,15 +227,13 @@ describe("chain_to_task_id column", () => {
   it("task can be created with chain_to_task_id set to another task id", () => {
     const db = createDb();
     try {
-      db.prepare(
-        "INSERT INTO tasks (id, title, status) VALUES ('source-1', 'Source Task', 'in_progress')",
-      ).run();
+      db.prepare("INSERT INTO tasks (id, title, status) VALUES ('source-1', 'Source Task', 'in_progress')").run();
       db.prepare(
         "INSERT INTO tasks (id, title, status, chain_to_task_id) VALUES ('chain-1', 'Chained Task', 'pending', 'source-1')",
       ).run();
-      const row = db
-        .prepare("SELECT chain_to_task_id FROM tasks WHERE id = 'chain-1'")
-        .get() as { chain_to_task_id: string };
+      const row = db.prepare("SELECT chain_to_task_id FROM tasks WHERE id = 'chain-1'").get() as {
+        chain_to_task_id: string;
+      };
       expect(row.chain_to_task_id).toBe("source-1");
     } finally {
       db.close();
@@ -246,9 +246,9 @@ describe("chain_to_task_id column", () => {
       db.prepare(
         "INSERT INTO tasks (id, title, status, chain_to_task_id) VALUES ('normal-1', 'Normal Task', 'inbox', NULL)",
       ).run();
-      const row = db
-        .prepare("SELECT chain_to_task_id FROM tasks WHERE id = 'normal-1'")
-        .get() as { chain_to_task_id: string | null };
+      const row = db.prepare("SELECT chain_to_task_id FROM tasks WHERE id = 'normal-1'").get() as {
+        chain_to_task_id: string | null;
+      };
       expect(row.chain_to_task_id).toBeNull();
     } finally {
       db.close();
@@ -298,9 +298,10 @@ describe("linear task chaining via run-complete-handler", () => {
         vi.useRealTimers();
       }
 
-      const chainedRow = db
-        .prepare("SELECT status, description FROM tasks WHERE id = 'chained-task'")
-        .get() as { status: string; description: string };
+      const chainedRow = db.prepare("SELECT status, description FROM tasks WHERE id = 'chained-task'").get() as {
+        status: string;
+        description: string;
+      };
 
       expect(chainedRow.status).toBe("planned");
       expect(chainedRow.description).toContain("Chained from");
@@ -338,9 +339,7 @@ describe("linear task chaining via run-complete-handler", () => {
         vi.useRealTimers();
       }
 
-      const row = db
-        .prepare("SELECT description FROM tasks WHERE id = 'chained-2'")
-        .get() as { description: string };
+      const row = db.prepare("SELECT description FROM tasks WHERE id = 'chained-2'").get() as { description: string };
 
       expect(row.description).toContain("Chained from");
       expect(row.description).toContain("Write Draft");
@@ -378,9 +377,7 @@ describe("linear task chaining via run-complete-handler", () => {
       }
 
       // No task should have been promoted to 'planned' due to chain
-      const chainedRows = db
-        .prepare("SELECT id FROM tasks WHERE status = 'planned'")
-        .all();
+      const chainedRows = db.prepare("SELECT id FROM tasks WHERE status = 'planned'").all();
       expect(chainedRows).toHaveLength(0);
 
       // No chain broadcast should have been emitted
@@ -463,9 +460,9 @@ describe("linear task chaining via run-complete-handler", () => {
       }
 
       // Status should remain 'planned' (unchanged), not double-promoted
-      const row = db
-        .prepare("SELECT status FROM tasks WHERE id = 'chained-already-planned'")
-        .get() as { status: string };
+      const row = db.prepare("SELECT status FROM tasks WHERE id = 'chained-already-planned'").get() as {
+        status: string;
+      };
       expect(row.status).toBe("planned");
     } finally {
       db.close();

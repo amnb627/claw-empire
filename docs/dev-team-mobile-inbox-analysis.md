@@ -16,35 +16,35 @@
 
 ### 2.1 ファイル構造
 
-| ファイル | 説明 |
-|:---------|:-----|
-| `src/components/chat/decision-inbox.ts` | DecisionInboxアイテムタイプ定義 |
-| `src/components/DecisionInboxModal.tsx` | UIモーダルコンポーネント |
-| `src/app/decision-inbox.ts` | ワークフローマッピング関数 |
-| `server/modules/routes/ops/messages/decision-inbox-routes.ts` | APIルート定義 |
-| `server/modules/routes/ops/messages/decision-inbox/` | サブモジュール群 |
+| ファイル                                                      | 説明                            |
+| :------------------------------------------------------------ | :------------------------------ |
+| `src/components/chat/decision-inbox.ts`                       | DecisionInboxアイテムタイプ定義 |
+| `src/components/DecisionInboxModal.tsx`                       | UIモーダルコンポーネント        |
+| `src/app/decision-inbox.ts`                                   | ワークフローマッピング関数      |
+| `server/modules/routes/ops/messages/decision-inbox-routes.ts` | APIルート定義                   |
+| `server/modules/routes/ops/messages/decision-inbox/`          | サブモジュール群                |
 
 ### 2.2 DecisionInbox アイテム種類
 
 ```typescript
 type DecisionInboxKind =
-  | "agent_request"           // エージェント要請
-  | "project_review_ready"    // プロジェクトレビュー準備完了
-  | "task_timeout_resume"     // タスクタイムアウト再開
-  | "review_round_pick";      // レビューラウンド選択
+  | "agent_request" // エージェント要請
+  | "project_review_ready" // プロジェクトレビュー準備完了
+  | "task_timeout_resume" // タスクタイムアウト再開
+  | "review_round_pick"; // レビューラウンド選択
 ```
 
 ### 2.3 API エンドポイント
 
-| メソッド | エンドポイント | 説明 |
-|:---------|:---------------|:-----|
-| GET | `/api/decision-inbox` | 未決アイテム一覧取得 |
-| POST | `/api/decision-inbox/:id/reply` | 決定返信処理 |
+| メソッド | エンドポイント                  | 説明                 |
+| :------- | :------------------------------ | :------------------- |
+| GET      | `/api/decision-inbox`           | 未決アイテム一覧取得 |
+| POST     | `/api/decision-inbox/:id/reply` | 決定返信処理         |
 
 ### 2.4 WebSocket イベント
 
-| イベント | 方向 | 説明 |
-|:---------|:-----|:-----|
+| イベント                | 方向          | 説明                 |
+| :---------------------- | :------------ | :------------------- |
 | `decision_inbox_update` | Server→Client | 未決アイテム更新通知 |
 
 ---
@@ -68,7 +68,9 @@ const runYoloAutopilot = () => {
     runYoloDecisionAutopilot({
       getDecisionInboxItems,
       applyDecisionReply,
-      shouldSkipItem: (item) => { /* スキップロジック */ }
+      shouldSkipItem: (item) => {
+        /* スキップロジック */
+      },
     });
   } finally {
     yoloAutopilotInFlight = false;
@@ -78,11 +80,11 @@ const runYoloAutopilot = () => {
 
 ### 3.3 Watcher 機能要件
 
-| 機能 | ステータス | 説明 |
-|:-----|:----------|:-----|
-| 定期ポーリング | ✅ 実装済み | 2.5秒間隔で自動実行 |
-| YOLOモード | ✅ 実装済み | 自動決定オートパイロット |
-| Messenger通知 | ✅ 実装済み | Telegram/Discord連携 |
+| 機能             | ステータス  | 説明                      |
+| :--------------- | :---------- | :------------------------ |
+| 定期ポーリング   | ✅ 実装済み | 2.5秒間隔で自動実行       |
+| YOLOモード       | ✅ 実装済み | 自動決定オートパイロット  |
+| Messenger通知    | ✅ 実装済み | Telegram/Discord連携      |
 | スキップロジック | ✅ 実装済み | video_preprod等の条件分岐 |
 
 ---
@@ -91,30 +93,28 @@ const runYoloAutopilot = () => {
 
 ### 4.1 現状のモバイル対応
 
-| 機能 | ファイル | ステータス |
-|:-----|:---------|:----------|
-| モバイルヘッダーメニュー | `src/app/AppHeaderBar.tsx` | ✅ 実装済み |
-| Office Pack切替 | `src/app/AppHeaderBar.mobile-office-pack.test.tsx` | ✅ 実装済み |
-| DecisionInboxModal | `src/components/DecisionInboxModal.tsx` | ✅ レスポンシブ対応 |
+| 機能                     | ファイル                                           | ステータス          |
+| :----------------------- | :------------------------------------------------- | :------------------ |
+| モバイルヘッダーメニュー | `src/app/AppHeaderBar.tsx`                         | ✅ 実装済み         |
+| Office Pack切替          | `src/app/AppHeaderBar.mobile-office-pack.test.tsx` | ✅ 実装済み         |
+| DecisionInboxModal       | `src/components/DecisionInboxModal.tsx`            | ✅ レスポンシブ対応 |
 
 ### 4.2 DecisionInboxModal レスポンシブ設計
 
 ```tsx
 // 既存のレスポンシブ対応
 <div className="relative mx-4 w-full max-w-3xl rounded-2xl ...">
-  <div className="max-h-[70vh] overflow-y-auto p-4">
-    {/* アイテムリスト - スクロール対応済み */}
-  </div>
+  <div className="max-h-[70vh] overflow-y-auto p-4">{/* アイテムリスト - スクロール対応済み */}</div>
 </div>
 ```
 
 ### 4.3 追加モバイル機能要件
 
-| 優先度 | 機能 | 説明 |
-|:-------|:-----|:-----|
-| High | タッチ操作最適化 | ボタンタップ領域拡大 |
-| Medium | プルツーリフレッシュ | 未決アイテム更新 |
-| Low | オフライン対応 | Service Worker実装 |
+| 優先度 | 機能                 | 説明                 |
+| :----- | :------------------- | :------------------- |
+| High   | タッチ操作最適化     | ボタンタップ領域拡大 |
+| Medium | プルツーリフレッシュ | 未決アイテム更新     |
+| Low    | オフライン対応       | Service Worker実装   |
 
 ---
 
@@ -186,13 +186,13 @@ DecisionInboxは以下のWorkflow Packに対応：
 
 ## 6. 技術スタック
 
-| レイヤー | 技術 |
-|:---------|:-----|
-| Frontend | React 19.2, TypeScript 5.9, Tailwind CSS |
-| Backend | Express 5, Node.js >=22 |
-| Database | SQLite (node:sqlite) |
-| Realtime | WebSocket (ws) |
-| Messenger | Telegram, Discord |
+| レイヤー  | 技術                                     |
+| :-------- | :--------------------------------------- |
+| Frontend  | React 19.2, TypeScript 5.9, Tailwind CSS |
+| Backend   | Express 5, Node.js >=22                  |
+| Database  | SQLite (node:sqlite)                     |
+| Realtime  | WebSocket (ws)                           |
+| Messenger | Telegram, Discord                        |
 
 ---
 
@@ -203,20 +203,22 @@ DecisionInboxは以下のWorkflow Packに対応：
 元リクエスト「??obile Inbox??name」の正確な内容が不明。
 
 **影響**:
+
 - 具体的な追加要件が特定できない
 - 既存機能で十分か否か判断不可
 
 **次のアクション**:
+
 - CEOより正確なリクエスト内容の再提供を依頼
 - または、日本語での要件概要共有を待機
 
 ### 7.2 技術的補完項目
 
-| 項目 | ステータス | 説明 |
-|:-----|:----------|:-----|
-| OS対応 | 未定 | Windows/Linux/macOS対応確認済み |
-| データ永続化 | ✅ 完了 | SQLiteベース実装 |
-| セキュリティ要件 | 🔄 調査中 | 認証・認可仕様確認必要 |
+| 項目             | ステータス | 説明                            |
+| :--------------- | :--------- | :------------------------------ |
+| OS対応           | 未定       | Windows/Linux/macOS対応確認済み |
+| データ永続化     | ✅ 完了    | SQLiteベース実装                |
+| セキュリティ要件 | 🔄 調査中  | 認証・認可仕様確認必要          |
 
 ---
 

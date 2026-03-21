@@ -52,7 +52,7 @@ const minimalOverlaysProps = {
   submitBusy: false,
   manualPathPickerOpen: false,
   manualPathLoading: false,
-  manualPathCurrent: null,
+  manualPathCurrent: "",
   manualPathParent: null,
   manualPathEntries: [],
   manualPathTruncated: false,
@@ -85,9 +85,7 @@ function makeProps(overrides: {
   workflowPackKey?: string;
 }) {
   const schema: PackInputSchema | null = overrides.packSchema ?? null;
-  const prompt = schema
-    ? assemblePackPrompt("Test Pack", schema, {}, "")
-    : "";
+  const prompt = schema ? assemblePackPrompt("Test Pack", schema, {}, "") : "";
 
   return {
     t: (m: Record<string, string>) => m.en,
@@ -132,6 +130,10 @@ function makeProps(overrides: {
     onTogglePackPreview: vi.fn(),
     onOutputPathChange: vi.fn(),
     onAutoFillOutputPath: vi.fn(),
+    contextFiles: [],
+    onAddContextFile: vi.fn(),
+    onUpdateContextFile: vi.fn(),
+    onRemoveContextFile: vi.fn(),
   };
 }
 

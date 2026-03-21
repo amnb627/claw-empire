@@ -32,18 +32,23 @@ interface TaskCreationAuditBody {
 interface TaskCreationAuditParams {
   taskId: string;
   taskTitle: string;
-  taskStatus: string;
-  departmentId: string;
-  assignedAgentId: string;
-  sourceTaskId: string;
-  taskType: string;
-  projectPath: string | null;
+  taskStatus?: string | null;
+  departmentId?: string | null;
+  assignedAgentId?: string | null;
+  sourceTaskId?: string | null;
+  taskType?: string | null;
+  projectPath?: string | null;
   trigger: string;
-  triggerDetail: string;
-  actorType: string;
-  actorId: string;
-  actorName: string;
-  body: TaskCreationAuditBody;
+  triggerDetail?: string | null;
+  actorType?: string | null;
+  actorId?: string | null;
+  actorName?: string | null;
+  body?: Record<string, unknown> | null;
+  req?: {
+    get(name: string): string | undefined;
+    ip?: string;
+    socket?: { remoteAddress?: string };
+  } | null;
 }
 
 interface ProviderModelEntry {
@@ -195,7 +200,7 @@ export function createCrossDeptCooperationTools(deps: CrossDeptCooperationDeps) 
 
     const excludedIds = [...new Set(excludeIds.map((id) => String(id || "").trim()).filter((id) => id.length > 0))];
     const idPlaceholders = candidateIds.map(() => "?").join(",");
-    const params: unknown[] = [...candidateIds];
+    const params: (string | number | null)[] = [...candidateIds];
 
     const deptClause = preferredDeptId ? "AND department_id = ?" : "";
     if (preferredDeptId) params.push(preferredDeptId);
@@ -416,14 +421,14 @@ export function createCrossDeptCooperationTools(deps: CrossDeptCooperationDeps) 
       const remaining = deptIds.length - index;
       notifyCeo(
         pickL(
-          l(
+          l([
             [`협업 요청 진행 중: ${crossDeptName} (${index + 1}/${deptIds.length}, 남은 ${remaining}팀 순차 진행)`],
             [
               `Collaboration request in progress: ${crossDeptName} (${index + 1}/${deptIds.length}, ${remaining} team(s) remaining in queue)`,
             ],
             [`協業依頼進行中: ${crossDeptName} (${index + 1}/${deptIds.length}、残り${remaining}チーム)`],
             [`协作请求进行中：${crossDeptName}（${index + 1}/${deptIds.length}，队列剩余${remaining}个团队）`],
-          ),
+          ]),
           lang,
         ),
         taskId,
@@ -431,7 +436,7 @@ export function createCrossDeptCooperationTools(deps: CrossDeptCooperationDeps) 
     }
 
     const coopReq = pickL(
-      l(
+      l([
         [
           `${crossCoordinatorName}님, 안녕하세요! 대표님 지시로 "${taskTitle}" 업무 진행 중인데, ${crossDeptName} 협조가 필요합니다. 도움 부탁드려요! 🤝`,
           `${crossCoordinatorName}님! "${taskTitle}" 건으로 ${crossDeptName} 지원이 필요합니다. 시간 되시면 협의 부탁드립니다.`,
@@ -442,7 +447,7 @@ export function createCrossDeptCooperationTools(deps: CrossDeptCooperationDeps) 
         ],
         [`${crossCoordinatorName}さん、CEO指示の"${taskTitle}"で${crossDeptName}の協力が必要です。お願いします！🤝`],
         [`${crossCoordinatorName}，CEO安排的"${taskTitle}"需要${crossDeptName}配合，麻烦协调一下！🤝`],
-      ),
+      ]),
       lang,
     );
     sendAgentMessage(
@@ -484,7 +489,7 @@ export function createCrossDeptCooperationTools(deps: CrossDeptCooperationDeps) 
       const crossAckMsg =
         execAgent.id !== crossCoordinator.id
           ? pickL(
-              l(
+              l([
                 [
                   `네, ${leaderName}님! 확인했습니다. ${execName}에게 바로 배정하겠습니다 👍`,
                   `알겠습니다! ${execName}가 지원하도록 하겠습니다. 진행 상황 공유드릴게요.`,
@@ -495,16 +500,16 @@ export function createCrossDeptCooperationTools(deps: CrossDeptCooperationDeps) 
                 ],
                 [`了解しました、${leaderName}さん！${execName}を割り当てます 👍`],
                 [`好的，${leaderName}！安排${execName}支援 👍`],
-              ),
+              ]),
               lang,
             )
           : pickL(
-              l(
+              l([
                 [`네, ${leaderName}님! 확인했습니다. 제가 직접 처리하겠습니다 👍`],
                 [`Sure, ${leaderName}! I'll handle it personally 👍`],
                 [`了解しました！私が直接対応します 👍`],
                 [`好的！我亲自来处理 👍`],
-              ),
+              ]),
               lang,
             );
       sendAgentMessage(crossCoordinator, crossAckMsg, "chat", "agent", null, taskId);
@@ -513,7 +518,12 @@ export function createCrossDeptCooperationTools(deps: CrossDeptCooperationDeps) 
       const crossTaskId = randomUUID();
       const ct = nowMs();
       const crossTaskTitle = pickL(
-        l([`[협업] ${taskTitle}`], [`[Collaboration] ${taskTitle}`], [`[協業] ${taskTitle}`], [`[协作] ${taskTitle}`]),
+        l([
+          [`[협업] ${taskTitle}`],
+          [`[Collaboration] ${taskTitle}`],
+          [`[協業] ${taskTitle}`],
+          [`[协作] ${taskTitle}`],
+        ]),
         lang,
       );
       const parentTaskPath = db
@@ -655,12 +665,12 @@ export function createCrossDeptCooperationTools(deps: CrossDeptCooperationDeps) 
               deptConstraint,
               deptPromptBlock,
               pickL(
-                l(
+                l([
                   ["위 작업을 충분히 완수하세요. 필요 시 위 대화 맥락을 참고하세요."],
                   ["Please complete the task above thoroughly. Use the conversation context above if relevant."],
                   ["上記タスクを丁寧に完了してください。必要に応じて会話コンテキストを参照してください。"],
                   ["请完整地完成上述任务。可按需参考上方会话上下文。"],
-                ),
+                ]),
                 taskLang,
               ),
             ],
@@ -733,12 +743,12 @@ export function createCrossDeptCooperationTools(deps: CrossDeptCooperationDeps) 
 
           notifyCeo(
             pickL(
-              l(
+              l([
                 [`${crossDeptName} ${execName}가 '${taskTitle}' 협업 작업을 시작했습니다.`],
                 [`${crossDeptName} ${execName} started collaboration work for '${taskTitle}'.`],
                 [`${crossDeptName}の${execName}が「${taskTitle}」の協業作業を開始しました。`],
                 [`${crossDeptName} 的 ${execName} 已开始「${taskTitle}」协作工作。`],
-              ),
+              ]),
               lang,
             ),
             crossTaskId,

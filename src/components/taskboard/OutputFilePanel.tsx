@@ -80,9 +80,7 @@ function FilePreviewModal({ taskId, filename, onClose }: FilePreviewModalProps) 
               {t({ ko: "불러오는 중...", en: "Loading...", ja: "読み込み中...", zh: "加载中..." })}
             </p>
           )}
-          {error && (
-            <p className="text-sm text-red-400">{error}</p>
-          )}
+          {error && <p className="text-sm text-red-400">{error}</p>}
           {content !== null && !loading && (
             <pre className="whitespace-pre-wrap font-mono text-xs leading-relaxed text-slate-300">{content}</pre>
           )}
@@ -150,10 +148,7 @@ export default function OutputFilePanel({ taskId }: OutputFilePanelProps) {
 
       <div className="space-y-1">
         {files.map((file) => (
-          <div
-            key={file.name}
-            className="flex items-center justify-between rounded-lg bg-slate-800/70 px-3 py-2"
-          >
+          <div key={file.name} className="flex items-center justify-between rounded-lg bg-slate-800/70 px-3 py-2">
             <span className="truncate font-mono text-xs text-slate-300">{file.name}</span>
             <div className="ml-2 flex shrink-0 items-center gap-2">
               <span className="text-[10px] text-slate-600">{formatBytes(file.size)}</span>
@@ -170,13 +165,7 @@ export default function OutputFilePanel({ taskId }: OutputFilePanelProps) {
         ))}
       </div>
 
-      {previewFile && (
-        <FilePreviewModal
-          taskId={taskId}
-          filename={previewFile}
-          onClose={() => setPreviewFile(null)}
-        />
-      )}
+      {previewFile && <FilePreviewModal taskId={taskId} filename={previewFile} onClose={() => setPreviewFile(null)} />}
     </div>
   );
 }

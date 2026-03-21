@@ -11,15 +11,7 @@ interface TaskSearchBarProps {
   searchRef?: RefObject<HTMLInputElement | null>;
 }
 
-const STATUS_PILLS = [
-  "inbox",
-  "planned",
-  "in_progress",
-  "review",
-  "done",
-  "pending",
-  "cancelled",
-] as const;
+const STATUS_PILLS = ["inbox", "planned", "in_progress", "review", "done", "pending", "cancelled"] as const;
 
 function cn(...classes: (string | false | null | undefined)[]) {
   return classes.filter(Boolean).join(" ");
@@ -92,9 +84,7 @@ export default function TaskSearchBar({
       <div className="flex items-center gap-2">
         {/* Search input */}
         <div className="relative flex-1">
-          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500 text-sm select-none">
-            🔍
-          </span>
+          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500 text-sm select-none">🔍</span>
           <input
             ref={inputRef}
             type="text"
@@ -125,12 +115,8 @@ export default function TaskSearchBar({
             onClick={clearFilters}
             className="text-xs text-amber-400 hover:text-amber-300 transition whitespace-nowrap"
           >
-            {activeFilterCount}{" "}
-            {t({ ko: "필터", en: "filter", ja: "フィルター", zh: "筛选" })}
-            {activeFilterCount > 1
-              ? t({ ko: "", en: "s", ja: "", zh: "" })
-              : ""}{" "}
-            ✕
+            {activeFilterCount} {t({ ko: "필터", en: "filter", ja: "フィルター", zh: "筛选" })}
+            {activeFilterCount > 1 ? t({ ko: "", en: "s", ja: "", zh: "" }) : ""} ✕
           </button>
         )}
       </div>

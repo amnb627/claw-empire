@@ -108,11 +108,7 @@ export function detectPrivilegeEscalation(
     return `Role escalation attempt: session role '${sessionCtx.userRole}' but claimed '${claimedRole}'`;
   }
 
-  if (
-    claimedDepartmentId &&
-    sessionCtx.departmentId &&
-    claimedDepartmentId !== sessionCtx.departmentId
-  ) {
+  if (claimedDepartmentId && sessionCtx.departmentId && claimedDepartmentId !== sessionCtx.departmentId) {
     return `Department spoofing attempt: session dept '${sessionCtx.departmentId}' but claimed '${claimedDepartmentId}'`;
   }
 

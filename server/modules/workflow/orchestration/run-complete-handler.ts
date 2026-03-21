@@ -30,9 +30,21 @@ export interface RunCompleteHandlerDeps {
   findTeamLeader(departmentId: string | null): unknown;
   getAgentDisplayName(agent: unknown, lang: string): string;
   pickL(pool: unknown, lang: string): string;
-  l(ko: string[], en: string[], ja?: string[], zh?: string[]): { ko: string[]; en: string[]; ja: string[]; zh: string[] };
+  l(
+    ko: string[],
+    en: string[],
+    ja?: string[],
+    zh?: string[],
+  ): { ko: string[]; en: string[]; ja: string[]; zh: string[] };
   notifyCeo(message: string, taskId: string): void;
-  sendAgentMessage(agent: unknown, content: string, messageType: string, receiverType: string, receiverId: string | null, taskId: string): void;
+  sendAgentMessage(
+    agent: unknown,
+    content: string,
+    messageType: string,
+    receiverType: string,
+    receiverId: string | null,
+    taskId: string,
+  ): void;
   resolveLang(text: string): string;
   formatTaskSubtaskProgressSummary(taskId: string, lang: string): string;
   crossDeptNextCallbacks: Map<string, () => void>;
@@ -40,13 +52,34 @@ export interface RunCompleteHandlerDeps {
   subtaskDelegationCallbacks: Map<string, () => void>;
   finishReview(taskId: string, taskTitle: string): void;
   reconcileDelegatedSubtasksAfterRun(taskId: string, exitCode: number): void;
-  completeTaskWithoutReview(task: { id: string; title: string; description: string | null; department_id: string | null; source_task_id: string | null; assigned_agent_id: string | null }, logMessage: string): void;
-  isReportDesignCheckpointTask(task: { task_type?: string | null; description?: string | null } | null | undefined): boolean;
+  completeTaskWithoutReview(
+    task: {
+      id: string;
+      title: string;
+      description: string | null;
+      department_id: string | null;
+      source_task_id: string | null;
+      assigned_agent_id: string | null;
+    },
+    logMessage: string,
+  ): void;
+  isReportDesignCheckpointTask(
+    task: { task_type?: string | null; description?: string | null } | null | undefined,
+  ): boolean;
   extractReportDesignParentTaskId(task: { description?: string | null } | null | undefined): string | null;
   resumeReportAfterDesignCheckpoint(parentTaskId: string, checkpointTaskId: string): void;
-  isPresentationReportTask(task: { task_type?: string | null; description?: string | null } | null | undefined): boolean;
+  isPresentationReportTask(
+    task: { task_type?: string | null; description?: string | null } | null | undefined,
+  ): boolean;
   readReportFlowValue(description: string | null | undefined, key: string): string | null;
-  startReportDesignCheckpoint(task: { id: string; title: string; description: string | null; project_id: string | null; project_path: string | null; assigned_agent_id: string | null }): boolean;
+  startReportDesignCheckpoint(task: {
+    id: string;
+    title: string;
+    description: string | null;
+    project_id: string | null;
+    project_path: string | null;
+    assigned_agent_id: string | null;
+  }): boolean;
   upsertReportFlowValue(description: string | null | undefined, key: string, value: string): string;
   isReportRequestTask(task: { task_type?: string | null; description?: string | null } | null | undefined): boolean;
   notifyTaskStatus(taskId: string, taskTitle: string, status: string, lang: string): void;
@@ -99,7 +132,6 @@ export function createRunCompleteHandler(deps: RunCompleteHandlerDeps) {
     hasVisibleDiffSummary,
   } = deps;
 
-
   /**
    * Check if a pending task is chained to the just-completed task,
    * and if so promote it from 'pending' -> 'planned' with enriched description.
@@ -117,9 +149,9 @@ export function createRunCompleteHandler(deps: RunCompleteHandlerDeps) {
 
     if (!chainedTask) return;
 
-    const completedResult = db
-      .prepare("SELECT result, title FROM tasks WHERE id = ?")
-      .get(completedTaskId) as { result: string | null; title: string } | undefined;
+    const completedResult = db.prepare("SELECT result, title FROM tasks WHERE id = ?").get(completedTaskId) as
+      | { result: string | null; title: string }
+      | undefined;
 
     const chainContext = completedResult?.result
       ? `
@@ -135,9 +167,11 @@ ${completedResult.result.slice(0, 2000)}`
 
     const enrichedDescription = (chainedTask.description || "") + chainContext;
 
-    db.prepare(
-      `UPDATE tasks SET status = 'planned', description = ?, updated_at = ? WHERE id = ?`,
-    ).run(enrichedDescription, nowMs(), chainedTask.id);
+    db.prepare(`UPDATE tasks SET status = 'planned', description = ?, updated_at = ? WHERE id = ?`).run(
+      enrichedDescription,
+      nowMs(),
+      chainedTask.id,
+    );
 
     broadcast("task_update", { id: chainedTask.id, status: "planned" });
 
@@ -369,9 +403,9 @@ ${completedResult.result.slice(0, 2000)}`
           | undefined;
 
         if (completedTask?.project_id) {
-          const providerRow = db
-            .prepare("SELECT provider FROM active_cli_processes WHERE task_id = ?")
-            .get(taskId) as { provider: string } | undefined;
+          const providerRow = db.prepare("SELECT provider FROM active_cli_processes WHERE task_id = ?").get(taskId) as
+            | { provider: string }
+            | undefined;
           const provider = providerRow?.provider ?? (activeProcesses.get(taskId) as any)?.spawnargs?.[0] ?? "claude";
           const stored = extractAndStoreInsights({
             taskId,
@@ -430,9 +464,9 @@ ${completedResult.result.slice(0, 2000)}`
           priority: (task as any).priority ?? 0,
           taskType: task.task_type,
           sourceTaskId: task.source_task_id,
-          subtaskCount: countSubtasks(db, taskId),
+          subtaskCount: countSubtasks(db as any, taskId),
           agentRole: agentRow?.role ?? "junior",
-          streakCount: countAgentStreak(db, task.assigned_agent_id!),
+          streakCount: countAgentStreak(db as any, task.assigned_agent_id!),
           firstPassSuccess,
         });
         db.prepare(
@@ -648,8 +682,7 @@ ${completedResult.result.slice(0, 2000)}`
             ? (JSON.parse(packRow.qa_rules_json) as { failOnMissingSections?: boolean; requiredSections?: string[] })
             : null;
           const shouldPeerReview =
-            packQaRules?.failOnMissingSections === true &&
-            (packQaRules?.requiredSections ?? []).length > 0;
+            packQaRules?.failOnMissingSections === true && (packQaRules?.requiredSections ?? []).length > 0;
 
           if (shouldPeerReview) {
             const reviewResult = runPeerReview({
@@ -776,7 +809,7 @@ ${completedResult.result.slice(0, 2000)}`
         // If worktree exists, include diff summary in the report
         const wtInfo = taskWorktrees.get(taskId);
         let diffSummary = "";
-        if (wtInfo) {
+        if (wtInfo?.projectPath) {
           diffSummary = getWorktreeDiffSummary(wtInfo.projectPath, taskId);
           if (hasVisibleDiffSummary(diffSummary)) {
             appendTaskLog(taskId, "system", `Worktree diff summary:\n${diffSummary}`);
@@ -852,7 +885,7 @@ ${completedResult.result.slice(0, 2000)}`
 
       // Clean up worktree on failure — failed work shouldn't persist
       const failWtInfo = taskWorktrees.get(taskId);
-      if (failWtInfo) {
+      if (failWtInfo?.projectPath) {
         cleanupWorktree(failWtInfo.projectPath, taskId);
         appendTaskLog(taskId, "system", "Worktree cleaned up (task failed)");
       }

@@ -357,23 +357,41 @@ export function registerWorkflowPackRoutes(
     const packRows = db.prepare("SELECT key FROM workflow_packs").all() as Array<{ key: string }>;
 
     const results = packRows.map((pack) => {
-      const total = (db.prepare(`
+      const total = (
+        db
+          .prepare(
+            `
         SELECT COUNT(*) as count FROM tasks
         WHERE workflow_pack_key = ? AND created_at >= ?
-      `).get(pack.key, since) as { count: number }).count;
+      `,
+          )
+          .get(pack.key, since) as { count: number }
+      ).count;
 
-      const completed = (db.prepare(`
+      const completed = (
+        db
+          .prepare(
+            `
         SELECT COUNT(*) as count FROM tasks
         WHERE workflow_pack_key = ? AND status = 'done' AND created_at >= ?
-      `).get(pack.key, since) as { count: number }).count;
+      `,
+          )
+          .get(pack.key, since) as { count: number }
+      ).count;
 
-      const firstPass = (db.prepare(`
+      const firstPass = (
+        db
+          .prepare(
+            `
         SELECT COUNT(*) as count FROM tasks t
         WHERE t.workflow_pack_key = ? AND t.status = 'done' AND t.created_at >= ?
           AND NOT EXISTS (
             SELECT 1 FROM review_revision_history r WHERE r.task_id = t.id
           )
-      `).get(pack.key, since) as { count: number }).count;
+      `,
+          )
+          .get(pack.key, since) as { count: number }
+      ).count;
 
       const firstPassRate = completed > 0 ? Math.round((firstPass / completed) * 100) : null;
 
@@ -409,46 +427,82 @@ export function registerWorkflowPackRoutes(
       return res.status(404).json({ error: "pack_not_found" });
     }
 
-    const total = (db.prepare(`
+    const total = (
+      db
+        .prepare(
+          `
       SELECT COUNT(*) as count FROM tasks
       WHERE workflow_pack_key = ? AND created_at >= ?
-    `).get(key, since) as { count: number }).count;
+    `,
+        )
+        .get(key, since) as { count: number }
+    ).count;
 
-    const completed = (db.prepare(`
+    const completed = (
+      db
+        .prepare(
+          `
       SELECT COUNT(*) as count FROM tasks
       WHERE workflow_pack_key = ? AND status = 'done' AND created_at >= ?
-    `).get(key, since) as { count: number }).count;
+    `,
+        )
+        .get(key, since) as { count: number }
+    ).count;
 
-    const firstPass = (db.prepare(`
+    const firstPass = (
+      db
+        .prepare(
+          `
       SELECT COUNT(*) as count FROM tasks t
       WHERE t.workflow_pack_key = ? AND t.status = 'done' AND t.created_at >= ?
         AND NOT EXISTS (
           SELECT 1 FROM review_revision_history r WHERE r.task_id = t.id
         )
-    `).get(key, since) as { count: number }).count;
+    `,
+        )
+        .get(key, since) as { count: number }
+    ).count;
 
-    const avgTime = (db.prepare(`
+    const avgTime = (
+      db
+        .prepare(
+          `
       SELECT AVG(completed_at - started_at) as avg_ms FROM tasks
       WHERE workflow_pack_key = ? AND status = 'done'
         AND started_at IS NOT NULL AND completed_at IS NOT NULL
         AND created_at >= ?
-    `).get(key, since) as { avg_ms: number | null }).avg_ms;
+    `,
+        )
+        .get(key, since) as { avg_ms: number | null }
+    ).avg_ms;
 
-    const topRevisions = db.prepare(`
+    const topRevisions = db
+      .prepare(
+        `
       SELECT normalized_note, COUNT(*) as count FROM review_revision_history r
       JOIN tasks t ON r.task_id = t.id
       WHERE t.workflow_pack_key = ? AND r.created_at >= ?
       GROUP BY normalized_note ORDER BY count DESC LIMIT 5
-    `).all(key, since) as Array<{ normalized_note: string; count: number }>;
+    `,
+      )
+      .all(key, since) as Array<{ normalized_note: string; count: number }>;
 
-    const recent = db.prepare(`
+    const recent = db
+      .prepare(
+        `
       SELECT id, title, status, created_at, completed_at,
              (SELECT COUNT(*) FROM review_revision_history WHERE task_id = tasks.id) as revision_count
       FROM tasks WHERE workflow_pack_key = ? AND created_at >= ?
       ORDER BY created_at DESC LIMIT 5
-    `).all(key, since) as Array<{
-      id: string; title: string; status: string;
-      created_at: number; completed_at: number | null; revision_count: number;
+    `,
+      )
+      .all(key, since) as Array<{
+      id: string;
+      title: string;
+      status: string;
+      created_at: number;
+      completed_at: number | null;
+      revision_count: number;
     }>;
 
     return res.json({

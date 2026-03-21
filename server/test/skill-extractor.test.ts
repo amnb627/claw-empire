@@ -163,9 +163,10 @@ describe("extractAndStoreInsights", () => {
     });
 
     expect(stored).toBeGreaterThan(0);
-    const memories = db
-      .prepare("SELECT * FROM agent_project_memory WHERE project_id = ?")
-      .all(projectId) as Array<{ insight: string; category: string }>;
+    const memories = db.prepare("SELECT * FROM agent_project_memory WHERE project_id = ?").all(projectId) as Array<{
+      insight: string;
+      category: string;
+    }>;
     expect(memories.length).toBeGreaterThan(0);
     const commandMemory = memories.find((m) => m.category === "command");
     expect(commandMemory).toBeDefined();
@@ -282,9 +283,9 @@ describe("extractAndStoreInsights", () => {
     expect(stored).toBeLessThanOrEqual(5);
 
     const count = (
-      db
-        .prepare("SELECT COUNT(*) as cnt FROM agent_project_memory WHERE project_id = ?")
-        .get(projectId) as { cnt: number }
+      db.prepare("SELECT COUNT(*) as cnt FROM agent_project_memory WHERE project_id = ?").get(projectId) as {
+        cnt: number;
+      }
     ).cnt;
     expect(count).toBeLessThanOrEqual(5);
   });
@@ -393,10 +394,12 @@ function insertProjectDirect(db: DatabaseSync): string {
 
 function insertMemory(db: DatabaseSync, projectId: string, insight: string): string {
   const id = randomUUID();
-  db.prepare(`
+  db.prepare(
+    `
     INSERT INTO agent_project_memory (id, project_id, provider, insight, category, confidence)
     VALUES (?, ?, ?, ?, ?, ?)
-  `).run(id, projectId, "claude", insight, "fact", 7);
+  `,
+  ).run(id, projectId, "claude", insight, "fact", 7);
   return id;
 }
 
@@ -461,9 +464,9 @@ describe("Memory API: DELETE /api/projects/:id/memory/:memoryId", () => {
 
     await request(app).delete(`/api/projects/${projectId}/memory/${memoryId}`).expect(200);
 
-    const row = db
-      .prepare("SELECT id FROM agent_project_memory WHERE id = ?")
-      .get(memoryId) as { id: string } | undefined;
+    const row = db.prepare("SELECT id FROM agent_project_memory WHERE id = ?").get(memoryId) as
+      | { id: string }
+      | undefined;
     expect(row).toBeUndefined();
 
     db.close();
@@ -499,9 +502,9 @@ describe("Memory API: DELETE /api/projects/:id/memory/:memoryId", () => {
     // Try to delete via projectId2 — should not delete
     await request(app).delete(`/api/projects/${projectId2}/memory/${memoryId}`).expect(200);
 
-    const row = db
-      .prepare("SELECT id FROM agent_project_memory WHERE id = ?")
-      .get(memoryId) as { id: string } | undefined;
+    const row = db.prepare("SELECT id FROM agent_project_memory WHERE id = ?").get(memoryId) as
+      | { id: string }
+      | undefined;
     expect(row?.id).toBe(memoryId); // still exists
 
     db.close();

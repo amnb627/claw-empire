@@ -38,7 +38,9 @@ function renderField(
       type="text"
       value={value}
       onChange={(event) => onChange(event.target.value)}
-      placeholder={required ? `Enter ${fieldLabel(key).toLowerCase()}...` : `(optional) ${fieldLabel(key).toLowerCase()}`}
+      placeholder={
+        required ? `Enter ${fieldLabel(key).toLowerCase()}...` : `(optional) ${fieldLabel(key).toLowerCase()}`
+      }
       data-testid={`pack-field-${key}`}
       className={`w-full rounded-lg border px-3 py-2 text-sm text-white placeholder-slate-500 outline-none transition focus:ring-1 ${
         required
@@ -66,9 +68,7 @@ export default function PackSchemaFields({
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2">
-        <span className="rounded bg-blue-700/30 px-2 py-0.5 text-xs font-semibold text-blue-300">
-          {packName}
-        </span>
+        <span className="rounded bg-blue-700/30 px-2 py-0.5 text-xs font-semibold text-blue-300">{packName}</span>
         <span className="text-xs text-slate-500">
           {t({
             ko: "팩 기반 입력 폼",

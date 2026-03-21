@@ -1,6 +1,7 @@
 # CEO Structure Map
 
 Generated from parallel architecture analysis lanes:
+
 1. Frontend module map (`src/`)
 2. Backend module map (`server/`)
 3. Tooling/docs map (`scripts/`, `docs/`)

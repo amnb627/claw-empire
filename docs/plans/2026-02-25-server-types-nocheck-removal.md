@@ -13,6 +13,7 @@
 ### Task 1: 기준선 타입체크 확보
 
 **Files:**
+
 - Modify: `tasks/todo.md`
 
 **Step 1: 타입체크 기준선 실행**
@@ -28,6 +29,7 @@ Expected: `13`개 파일 식별
 ### Task 2: 저위험 파일부터 `@ts-nocheck` 제거
 
 **Files:**
+
 - Modify: `server/modules/workflow.ts`
 - Modify: `server/modules/routes.ts`
 - Modify: `server/modules/lifecycle.ts`
@@ -48,6 +50,7 @@ Expected: 해당 파일 관련 신규 오류만 노출
 ### Task 3: 하위 모듈(Provider/Meeting/Coordination) 타입화
 
 **Files:**
+
 - Modify: `server/modules/workflow/agents/providers.ts`
 - Modify: `server/modules/workflow/orchestration/meetings.ts`
 - Modify: `server/modules/routes/collab/coordination.ts`
@@ -61,6 +64,7 @@ Run: `pnpm exec tsc -p tsconfig.node.json --pretty false`
 ### Task 4: 코어 오케스트레이션 파일 세분화
 
 **Files:**
+
 - Modify: `server/modules/workflow/core.ts`
 - Modify: `server/modules/workflow/agents.ts`
 - Modify: `server/modules/workflow/orchestration.ts`
@@ -83,6 +87,7 @@ Run: `pnpm exec tsc -p tsconfig.node.json --pretty false`
 ### Task 5: 라우트 파일 세분화 및 `@ts-nocheck` 제거
 
 **Files:**
+
 - Modify: `server/modules/routes/collab.ts`
 - Modify: `server/modules/routes/ops/messages.ts`
 - Modify: `server/modules/routes/ops.ts`
@@ -98,6 +103,7 @@ Run: `pnpm exec tsc -p tsconfig.node.json --pretty false`
 ### Task 6: 검증 및 결과 기록
 
 **Files:**
+
 - Modify: `tasks/todo.md`
 
 **Step 1: 최종 타입체크**

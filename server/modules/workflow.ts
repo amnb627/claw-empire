@@ -13,7 +13,9 @@ export function initializeWorkflow(
   ctx: RuntimeContext,
 ): WorkflowCoreExports & WorkflowAgentExports & WorkflowOrchestrationExports {
   const runtime: RuntimeContext = ctx;
-  const runtimeProxy = createDeferredRuntimeProxy(runtime);
+  const runtimeProxy = createDeferredRuntimeProxy(
+    runtime as unknown as Record<string, unknown>,
+  ) as unknown as RuntimeContext;
 
   runtime.DEPT_KEYWORDS = runtime.DEPT_KEYWORDS ?? {};
 
@@ -102,6 +104,9 @@ export function initializeWorkflow(
     wsClients: runtime.wsClients,
   } as unknown as WorkflowCoreExports & WorkflowAgentExports & WorkflowOrchestrationExports;
 
-  assertNoUnresolvedDeferredRuntimeFunctions(workflowExports, "workflow export wiring");
+  assertNoUnresolvedDeferredRuntimeFunctions(
+    workflowExports as unknown as Record<string, unknown>,
+    "workflow export wiring",
+  );
   return workflowExports;
 }

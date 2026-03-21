@@ -138,9 +138,7 @@ describe("ScheduleManagerTab", () => {
     await user.click(screen.getByRole("button", { name: /^Save$/i }));
 
     await waitFor(() => {
-      expect(apiMocks.createSchedule).toHaveBeenCalledWith(
-        expect.objectContaining({ title_template: "Daily Report" }),
-      );
+      expect(apiMocks.createSchedule).toHaveBeenCalledWith(expect.objectContaining({ title_template: "Daily Report" }));
     });
 
     await waitFor(() => {

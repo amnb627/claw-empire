@@ -1,6 +1,6 @@
-import { randomUUID } from 'node:crypto';
-import type { DatabaseSync } from 'node:sqlite';
-import { checkRequiredSections } from '../qa/section-parser.ts';
+import { randomUUID } from "node:crypto";
+import type { DatabaseSync } from "node:sqlite";
+import { checkRequiredSections } from "../qa/section-parser.ts";
 
 export interface PeerReviewOptions {
   taskId: string;
@@ -35,18 +35,18 @@ export function runPeerReview(opts: PeerReviewOptions): PeerReviewResult {
   const meetingId = randomUUID();
 
   // Fetch QA rules for this pack
-  const pack = (opts.db.prepare(
-    'SELECT qa_rules_json FROM workflow_packs WHERE key = ?',
-  ).get(opts.packKey)) as { qa_rules_json: string } | undefined;
+  const pack = opts.db.prepare("SELECT qa_rules_json FROM workflow_packs WHERE key = ?").get(opts.packKey) as
+    | { qa_rules_json: string }
+    | undefined;
 
   let qaRules: QaRules = {};
   try {
-    qaRules = JSON.parse(pack?.qa_rules_json ?? '{}') as QaRules;
+    qaRules = JSON.parse(pack?.qa_rules_json ?? "{}") as QaRules;
   } catch {
     /* malformed JSON — treat as empty rules */
   }
 
-  const result = opts.primaryResult ?? '';
+  const result = opts.primaryResult ?? "";
 
   // --- Required sections check (via section-parser) ---
   const sectionCheck = checkRequiredSections(result, qaRules.requiredSections ?? []);
@@ -57,32 +57,26 @@ export function runPeerReview(opts: PeerReviewOptions): PeerReviewResult {
   for (const rule of qaRules.rules ?? []) {
     if (/must begin with.*action verb/i.test(rule)) {
       const checklistItems = result.match(/^- \[[ x]\] (.+)$/gm) ?? [];
-      const actionVerbs =
-        /^(確認|Send|Check|Review|Update|Create|Fix|Prepare|Submit|Contact|書|連絡|送|確|作|見)/i;
-      const badItems = checklistItems.filter(item => !actionVerbs.test(item.slice(6)));
+      const actionVerbs = /^(確認|Send|Check|Review|Update|Create|Fix|Prepare|Submit|Contact|書|連絡|送|確|作|見)/i;
+      const badItems = checklistItems.filter((item) => !actionVerbs.test(item.slice(6)));
       if (badItems.length > 0) {
-        failedRules.push(
-          `Checklist items not starting with action verb: ${badItems.slice(0, 2).join(', ')}`,
-        );
+        failedRules.push(`Checklist items not starting with action verb: ${badItems.slice(0, 2).join(", ")}`);
       }
     }
-    if (/at least one P0 item/i.test(rule) && !result.includes('P0')) {
-      failedRules.push('No P0 priority item in agenda');
+    if (/at least one P0 item/i.test(rule) && !result.includes("P0")) {
+      failedRules.push("No P0 priority item in agenda");
     }
   }
 
   const passed = missing.length === 0 && failedRules.length === 0;
-  const score = Math.max(
-    0,
-    100 - missing.length * 20 - failedRules.length * 10,
-  );
+  const score = Math.max(0, 100 - missing.length * 20 - failedRules.length * 10);
   const feedback = [
-    passed ? '✅ All QA checks passed.' : '❌ QA checks failed.',
-    missing.length > 0 ? `Missing sections: ${missing.join(', ')}` : '',
+    passed ? "✅ All QA checks passed." : "❌ QA checks failed.",
+    missing.length > 0 ? `Missing sections: ${missing.join(", ")}` : "",
     ...failedRules,
   ]
     .filter(Boolean)
-    .join('\n');
+    .join("\n");
 
   // --- Record the peer review as a meeting ---
   opts.db
@@ -90,14 +84,7 @@ export function runPeerReview(opts: PeerReviewOptions): PeerReviewResult {
       `INSERT INTO meeting_minutes (id, task_id, meeting_type, round, title, status, started_at, completed_at)
        VALUES (?, ?, 'peer_review', 1, ?, ?, ?, ?)`,
     )
-    .run(
-      meetingId,
-      opts.taskId,
-      `Peer Review: ${opts.packKey}`,
-      passed ? 'completed' : 'revision_requested',
-      now,
-      now,
-    );
+    .run(meetingId, opts.taskId, `Peer Review: ${opts.packKey}`, passed ? "completed" : "revision_requested", now, now);
 
   opts.db
     .prepare(
@@ -108,10 +95,7 @@ export function runPeerReview(opts: PeerReviewOptions): PeerReviewResult {
 
   // --- On failure: record each issue in revision history ---
   if (!passed) {
-    const notes = [
-      ...missing.map(m => `Missing section: ${m}`),
-      ...failedRules,
-    ];
+    const notes = [...missing.map((m) => `Missing section: ${m}`), ...failedRules];
     for (const note of notes) {
       try {
         opts.db
@@ -126,10 +110,10 @@ export function runPeerReview(opts: PeerReviewOptions): PeerReviewResult {
     }
   }
 
-  opts.broadcast('meeting_minute', {
+  opts.broadcast("meeting_minute", {
     taskId: opts.taskId,
     meetingId,
-    type: 'peer_review',
+    type: "peer_review",
     passed,
     score,
   });

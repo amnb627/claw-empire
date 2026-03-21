@@ -2,6 +2,7 @@ import { DatabaseSync } from "node:sqlite";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { applyBaseSchema } from "../../../bootstrap/schema/base-schema.ts";
 import { applyTaskSchemaMigrations } from "../../../bootstrap/schema/task-schema-migrations.ts";
+import type { Lang } from "../../../../types/lang.ts";
 import { createCrossDeptCooperationTools } from "./cross-dept-cooperation.ts";
 
 type ProviderCase = {
@@ -110,9 +111,11 @@ describe("createCrossDeptCooperationTools", () => {
       getAgentDisplayName: (agent: { name?: string }) => agent.name ?? "",
       sendAgentMessage: vi.fn(),
       notifyCeo: vi.fn(),
-      l: (ko: unknown, en: unknown, ja: unknown, zh: unknown) => ({ ko, en, ja, zh }),
-      pickL: (messages: Record<string, unknown>, lang: string) =>
-        pickVariant(messages[lang] ?? messages.en ?? messages.ko),
+      l: (variants: string[][]) => variants,
+      pickL: (variants: string[][], lang: Lang) =>
+        pickVariant(
+          variants[lang === "ko" ? 0 : lang === "en" ? 1 : lang === "ja" ? 2 : 3] ?? variants[1] ?? variants[0],
+        ),
       startTaskExecutionForAgent: vi.fn(),
       linkCrossDeptTaskToParentSubtask: vi.fn(() => null),
       detectProjectPath: vi.fn(() => "/workspace/demo"),
@@ -220,9 +223,11 @@ describe("createCrossDeptCooperationTools", () => {
       getAgentDisplayName: (agent: { name?: string }) => agent.name ?? "",
       sendAgentMessage: vi.fn(),
       notifyCeo: vi.fn(),
-      l: (ko: unknown, en: unknown, ja: unknown, zh: unknown) => ({ ko, en, ja, zh }),
-      pickL: (messages: Record<string, unknown>, lang: string) =>
-        pickVariant(messages[lang] ?? messages.en ?? messages.ko),
+      l: (variants: string[][]) => variants,
+      pickL: (variants: string[][], lang: Lang) =>
+        pickVariant(
+          variants[lang === "ko" ? 0 : lang === "en" ? 1 : lang === "ja" ? 2 : 3] ?? variants[1] ?? variants[0],
+        ),
       startTaskExecutionForAgent: vi.fn(),
       linkCrossDeptTaskToParentSubtask: vi.fn(() => "subtask-linked"),
       detectProjectPath: vi.fn(() => "/workspace/demo"),

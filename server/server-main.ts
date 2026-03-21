@@ -152,13 +152,13 @@ Object.assign(runtimeContext, registerApiRoutes(runtimeContext as RuntimeContext
 assertRuntimeFunctionsResolved(runtimeContext, ROUTE_RUNTIME_HELPER_KEYS, "route helper wiring");
 
 reconcileOrphanedProcesses(db).catch((err) => {
-  console.error('[ProcessRecovery] Error during orphan reconciliation:', err);
+  console.error("[ProcessRecovery] Error during orphan reconciliation:", err);
 });
 
 // On startup, prune stale climpire/* branches for all known projects
 {
   const _projectRows = db
-    .prepare('SELECT DISTINCT project_path FROM projects WHERE project_path IS NOT NULL')
+    .prepare("SELECT DISTINCT project_path FROM projects WHERE project_path IS NOT NULL")
     .all() as { project_path: string }[];
   for (const { project_path } of _projectRows) {
     pruneStaleClimpireBranches(db, project_path).catch(() => {
@@ -171,7 +171,9 @@ reconcileOrphanedProcesses(db).catch((err) => {
 // This allows worker threads to finish current queries before termination.
 function shutdownAsyncReader() {
   if (asyncReader) {
-    asyncReader.close().catch(() => {/* non-fatal */});
+    asyncReader.close().catch(() => {
+      /* non-fatal */
+    });
   }
 }
 process.once("SIGTERM", shutdownAsyncReader);

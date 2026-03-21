@@ -89,7 +89,12 @@ export default function KeyboardHelpModal({ onClose }: KeyboardHelpModalProps) {
       onClick={onClose}
       aria-modal="true"
       role="dialog"
-      aria-label={t({ ko: "키보드 단축키", en: "Keyboard Shortcuts", ja: "キーボードショートカット", zh: "键盘快捷键" })}
+      aria-label={t({
+        ko: "키보드 단축키",
+        en: "Keyboard Shortcuts",
+        ja: "キーボードショートカット",
+        zh: "键盘快捷键",
+      })}
     >
       <div
         className="w-full max-w-sm rounded-2xl border border-slate-700 bg-slate-900 p-6 shadow-2xl"
@@ -115,17 +120,13 @@ export default function KeyboardHelpModal({ onClose }: KeyboardHelpModalProps) {
                 {entry.keys.map((key, ki) => (
                   <span key={ki} className="flex items-center gap-1">
                     {ki > 0 && (
-                      <span className="text-xs text-slate-500">
-                        {t({ ko: "→", en: "→", ja: "→", zh: "→" })}
-                      </span>
+                      <span className="text-xs text-slate-500">{t({ ko: "→", en: "→", ja: "→", zh: "→" })}</span>
                     )}
                     <Kbd>{key}</Kbd>
                   </span>
                 ))}
               </div>
-              <span className="text-sm text-slate-400">
-                {t(entry.description)}
-              </span>
+              <span className="text-sm text-slate-400">{t(entry.description)}</span>
             </div>
           ))}
 
@@ -143,15 +144,18 @@ export default function KeyboardHelpModal({ onClose }: KeyboardHelpModalProps) {
                   <Kbd>{chord.key}</Kbd>
                 </span>
               </div>
-              <span className="text-sm text-slate-400">
-                {t(chord.description)}
-              </span>
+              <span className="text-sm text-slate-400">{t(chord.description)}</span>
             </div>
           ))}
         </div>
 
         <p className="mt-4 text-center text-xs text-slate-600">
-          {t({ ko: "Esc 또는 바깥 클릭으로 닫기", en: "Press Esc or click outside to close", ja: "Esc またはクリックで閉じる", zh: "按 Esc 或点击外部关闭" })}
+          {t({
+            ko: "Esc 또는 바깥 클릭으로 닫기",
+            en: "Press Esc or click outside to close",
+            ja: "Esc またはクリックで閉じる",
+            zh: "按 Esc 或点击外部关闭",
+          })}
         </p>
       </div>
     </div>

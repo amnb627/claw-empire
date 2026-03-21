@@ -202,10 +202,22 @@ export function TaskBoard({
       key: "Escape",
       description: "Close modal / clear search",
       handler: () => {
-        if (showKeyboardHelp) { setShowKeyboardHelp(false); return; }
-        if (showCreate) { setShowCreate(false); return; }
-        if (showProjectManager) { setShowProjectManager(false); return; }
-        if (showBulkHideModal) { setShowBulkHideModal(false); return; }
+        if (showKeyboardHelp) {
+          setShowKeyboardHelp(false);
+          return;
+        }
+        if (showCreate) {
+          setShowCreate(false);
+          return;
+        }
+        if (showProjectManager) {
+          setShowProjectManager(false);
+          return;
+        }
+        if (showBulkHideModal) {
+          setShowBulkHideModal(false);
+          return;
+        }
         if (advancedFilter.query || advancedFilter.status.length > 0) {
           setAdvancedFilter(EMPTY_FILTER);
           return;
@@ -244,9 +256,7 @@ export function TaskBoard({
         const task = flatTaskList[selectedTaskIndex];
         if (task) {
           // Click the task title toggle button inside the selected card
-          const el = document.querySelector<HTMLButtonElement>(
-            `[data-task-id="${task.id}"] .task-card-expand-btn`,
-          );
+          const el = document.querySelector<HTMLButtonElement>(`[data-task-id="${task.id}"] .task-card-expand-btn`);
           el?.click();
         }
       },
